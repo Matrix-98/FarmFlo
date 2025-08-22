@@ -278,3 +278,50 @@ include 'includes/head.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Vehicle Status -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-truck-moving me-2"></i>Vehicle Status</h5>
+                        <a href="<?php echo BASE_URL; ?>vehicles/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($available_vehicles)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Vehicle</th>
+                                        <th>Type</th>
+                                        <th>Capacity</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($available_vehicles as $vehicle): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($vehicle['license_plate']); ?></td>
+                                            <td><?php echo htmlspecialchars($vehicle['type']); ?></td>
+                                            <td><?php echo number_format($vehicle['capacity_weight'], 1); ?> kg</td>
+                                            <td>
+                                                <span class="badge bg-<?php echo $vehicle['status'] == 'Available' ? 'success' : 'warning'; ?>">
+                                                    <?php echo $vehicle['status']; ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No vehicles found.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>
