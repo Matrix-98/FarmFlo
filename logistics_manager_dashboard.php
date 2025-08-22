@@ -197,3 +197,84 @@ include 'includes/head.php';
                             <div class="col-md-3 mb-3">
                                 <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-primary btn-lg w-100">
                                     <i class="fas fa-truck me-2"></i>Manage Shipments
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="<?php echo BASE_URL; ?>drivers/" class="btn btn-info btn-lg w-100">
+                                    <i class="fas fa-users me-2"></i>Manage Drivers
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="<?php echo BASE_URL; ?>vehicles/" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-truck-moving me-2"></i>Manage Vehicles
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="<?php echo BASE_URL; ?>reports/" class="btn btn-warning btn-lg w-100">
+                                    <i class="fas fa-chart-bar me-2"></i>View Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Shipments and Vehicle Status -->
+        <div class="row">
+            <!-- Active Shipments -->
+            <div class="col-md-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i>Active Shipments</h5>
+                        <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($active_shipments)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer</th>
+                                        <th>Driver</th>
+                                        <th>Vehicle</th>
+                                        <th>Status</th>
+                                        <th>Weight</th>
+                                        <th>ETA</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($active_shipments as $shipment): ?>
+                                        <tr>
+                                            <td><?php echo $shipment['shipment_id']; ?></td>
+                                            <td><?php echo htmlspecialchars($shipment['customer_name']); ?></td>
+                                            <td>
+                                                <?php echo $shipment['driver_name'] ? htmlspecialchars($shipment['driver_name']) : '<span class="text-muted">Not Assigned</span>'; ?>
+                                            </td>
+                                            <td>
+                                                <?php echo $shipment['license_plate'] ? htmlspecialchars($shipment['license_plate']) : '<span class="text-muted">Not Assigned</span>'; ?>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<?php
+                                                echo $shipment['status'] == 'in_transit' ? 'primary' :
+                                                        ($shipment['status'] == 'out_for_delivery' ? 'warning' : 'info');
+                                                ?>">
+                                                    <?php echo ucfirst(str_replace('_', ' ', $shipment['status'])); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo number_format($shipment['total_weight_kg'], 1); ?> kg</td>
+                                            <td>
+                                                <?php echo date('M d, H:i', strtotime($shipment['planned_arrival'])); ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No active shipments.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
