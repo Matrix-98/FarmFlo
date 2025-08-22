@@ -152,3 +152,151 @@ include 'includes/head.php';
                 </div>
             </div>
         </div>
+
+        <?php if (empty($assigned_locations)): ?>
+            <!-- No Assigned Warehouses Alert -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>No Warehouses Assigned</h5>
+                        <p class="mb-2">You don't have any warehouses assigned to you yet. Please contact an administrator to assign warehouses to your account.</p>
+                        <p class="mb-0"><strong>Current Status:</strong> You cannot access inventory management until warehouses are assigned to your account.</p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-boxes fa-2x text-primary mb-2"></i>
+                        <h4><?php echo number_format($inventory_stats['available_quantity'], 1); ?> kg</h4>
+                        <p class="text-muted mb-0">Available Stock</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4><?php echo count($expiring_inventory); ?></h4>
+                        <p class="text-muted mb-0">Expiring Soon</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-dolly fa-2x text-info mb-2"></i>
+                        <h4><?php echo number_format($inventory_stats['reserved_quantity'], 1); ?> kg</h4>
+                        <p class="text-muted mb-0">Reserved Stock</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                        <h4><?php echo number_format($inventory_stats['lost_quantity'], 1); ?> kg</h4>
+                        <p class="text-muted mb-0">Lost/Damaged</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a href="<?php echo BASE_URL; ?>inventory/" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-boxes me-2"></i>Manage Inventory
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="<?php echo BASE_URL; ?>reports/" class="btn btn-warning btn-lg w-100">
+                                    <i class="fas fa-chart-bar me-2"></i>View Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiring Inventory -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Expiring Inventory</h5>
+                        <a href="<?php echo BASE_URL; ?>inventory/" class="btn btn-sm btn-outline-warning">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($expiring_inventory)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Location</th>
+                                        <th>Quantity</th>
+                                        <th>Expires</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($expiring_inventory as $item): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($item['location_name']); ?></td>
+                                            <td><?php echo number_format($item['quantity_kg'], 1); ?> kg</td>
+                                            <td>
+                                                <?php
+                                                $days_until = (strtotime($item['expiry_date']) - time()) / (60 * 60 * 24);
+                                                $badge_class = $days_until <= 2 ? 'danger' : ($days_until <= 5 ? 'warning' : 'info');
+                                                ?>
+                                                <span class="badge bg-<?php echo $badge_class; ?>">
+                                                    <?php echo date('M d', strtotime($item['expiry_date'])); ?>
+                                                    (<?php echo ceil($days_until); ?> days)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No expiring inventory in the next 7 days.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Inventory Movements -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Recent Inventory Movements</h5>
+                        <a href="<?php echo BASE_URL; ?>inventory/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($recent_movements)): ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Product</th>
+                                    <th>Location</th>
+                                    <th>Quantity</th>
+                                    <th>Stage</th>
+                                    <th>Created By</th>
