@@ -300,3 +300,38 @@ include 'includes/head.php';
                                     <th>Quantity</th>
                                     <th>Stage</th>
                                     <th>Created By</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($recent_movements as $movement): ?>
+                                    <tr>
+                                        <td><?php echo date('M d, H:i', strtotime($movement['created_at'])); ?></td>
+                                        <td><?php echo htmlspecialchars($movement['product_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($movement['location_name']); ?></td>
+                                        <td><?php echo number_format($movement['quantity_kg'], 1); ?> kg</td>
+                                        <td>
+                                                <span class="badge bg-<?php
+                                                echo $movement['stage'] == 'available' ? 'success' :
+                                                    ($movement['stage'] == 'reserved' ? 'warning' :
+                                                        ($movement['stage'] == 'in-transit' ? 'info' : 'danger'));
+                                                ?>">
+                                                    <?php echo ucfirst($movement['stage']); ?>
+                                                </span>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($movement['created_by']); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No recent inventory movements.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>
