@@ -35,3 +35,17 @@ echo "Customer has new activities: " . ($has_activities ? "Yes" : "No") . "<br>"
 echo "<h3>Test 5: Dashboard Visit Update</h3>";
 $old_visit = getUserLastDashboardVisit($admin_id, 'admin');
 echo "Admin last visit before update: " . $old_visit . "<br>";
+
+updateUserDashboardVisit($admin_id, 'admin');
+
+$new_visit = getUserLastDashboardVisit($admin_id, 'admin');
+echo "Admin last visit after update: " . $new_visit . "<br>";
+
+// Test 6: Check if activities are cleared after visit
+echo "<h3>Test 6: Activity Clear After Visit</h3>";
+$has_activities_after = hasNewActivities($admin_id, 'admin');
+echo "Admin has new activities after visit: " . ($has_activities_after ? "Yes" : "No") . "<br>";
+
+echo "<h3>Test Complete!</h3>";
+echo "<p>If all tests pass, the activity notification system is working correctly.</p>";
+?>
