@@ -7,3 +7,25 @@ echo "<p>This script tests the code helper functions to ensure they display the 
 
 // Test with some sample data
 echo "<h2>Testing Code Helper Functions</h2>";
+
+// Test Order Code
+echo "<h3>Order Codes</h3>";
+$sql_orders = "SELECT order_id, order_code FROM orders ORDER BY order_id DESC LIMIT 5";
+$result = mysqli_query($conn, $sql_orders);
+if ($result && mysqli_num_rows($result) > 0) {
+    echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr><th>Order ID</th><th>Database Order Code</th><th>Generated Order Code</th><th>Match?</th></tr>";
+    while ($row = mysqli_fetch_assoc($result)) {
+        $generated_code = getOrderCode($row['order_id']);
+        $match = ($row['order_code'] == $generated_code) ? '✅' : '❌';
+        echo "<tr>";
+        echo "<td>" . $row['order_id'] . "</td>";
+        echo "<td>" . ($row['order_code'] ?: 'NULL') . "</td>";
+        echo "<td>" . $generated_code . "</td>";
+        echo "<td>" . $match . "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>No orders found</p>";
+}
