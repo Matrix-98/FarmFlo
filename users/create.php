@@ -99,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $customer_type = trim($_POST["customer_type"]);
         }
     } else {
-        $customer_type = 'direct';
+        $customer_type = 'direct'; 
     }
 
     // Validate Email and check for uniqueness
@@ -206,8 +206,171 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Combine all errors for display
         $error_message = implode("<br>", array_filter([$username_err, $password_err, $confirm_password_err, $role_err, $email_err, $phone_err, $customer_type_err]));
         if ($role == 'warehouse_manager' && empty($assigned_locations)) { // Add specific error for unassigned warehouse manager
-            $error_message .= "<br>Warehouse Manager must be assigned to at least one warehouse.";
+             $error_message .= "<br>Warehouse Manager must be assigned to at least one warehouse.";
         }
     }
 }
 ?>
+
+<?php include '../includes/head.php'; ?>
+<style>
+.form-label i {
+    color: #6c757d;
+}
+
+.form-text i {
+    color: #0d6efd;
+}
+</style>
+<?php include '../includes/sidebar.php'; ?>
+
+<div class="content">
+    <?php include '../includes/navbar.php'; ?>
+
+    <div class="container-fluid mt-4">
+        <h2 class="mb-4">Add New User</h2>
+        <a href="<?php echo BASE_URL; ?>users/index.php" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> Back to User List</a>
+
+        <?php
+        if (isset($_SESSION['error_message'])) {
+            echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+            unset($_SESSION['error_message']);
+        }
+        if (isset($_SESSION['success_message'])) {
+            echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+            unset($_SESSION['success_message']);
+        }
+        // Display combined local validation errors if present
+        if (isset($error_message) && !empty($error_message) && $_SERVER["REQUEST_METHOD"] == "POST") {
+            echo '<div class="alert alert-danger">' . $error_message . '</div>';
+        }
+        ?>
+
+        <div class="card p-4 shadow-sm">
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                    <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($username); ?>" required>
+                    <div class="invalid-feedback"><?php echo $username_err; ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($password); ?>" required>
+                        <div class="invalid-feedback"><?php echo $password_err; ?></div>
+                        <small class="form-text text-muted">
+                            Must be 8+ chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char.
+                        </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($confirm_password); ?>" required>
+                        <div class="invalid-feedback"><?php echo $confirm_password_err; ?></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($email); ?>" required>
+                    <div class="invalid-feedback"><?php echo $email_err; ?></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                    <input type="text" name="phone" id="phone" class="form-control <?php echo (!empty($phone_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($phone); ?>" required>
+                    <div class="invalid-feedback"><?php echo $phone_err; ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select name="role" id="role" class="form-select <?php echo (!empty($role_err)) ? 'is-invalid' : ''; ?>" required>
+                            <option value="">Select Role</option>
+                            <option value="admin" <?php echo ($role == 'admin') ? 'selected' : ''; ?>>Admin</option>
+                            <option value="farm_manager" <?php echo ($role == 'farm_manager') ? 'selected' : ''; ?>>Farm Manager</option>
+                            <option value="warehouse_manager" <?php echo ($role == 'warehouse_manager') ? 'selected' : ''; ?>>Warehouse Manager</option>
+                            <option value="logistics_manager" <?php echo ($role == 'logistics_manager') ? 'selected' : ''; ?>>Logistics Manager</option>
+                            <option value="driver" <?php echo ($role == 'driver') ? 'selected' : ''; ?>>Driver</option>
+                            <option value="customer" <?php echo ($role == 'customer') ? 'selected' : ''; ?>>Customer</option>
+                        </select>
+                        <div class="invalid-feedback"><?php echo $role_err; ?></div>
+                    </div>
+
+                    <div class="col-md-6 mb-3" id="conditional_fields_container">
+                        <div id="customer_type_group" style="display: none;">
+                            <label for="customer_type" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                            <select name="customer_type" id="customer_type" class="form-select <?php echo (!empty($customer_type_err)) ? 'is-invalid' : ''; ?>">
+                                <option value="">Select Type</option>
+                                <option value="direct" <?php echo ($customer_type == 'direct') ? 'selected' : ''; ?>>Direct Customer</option>
+                                <option value="retailer" <?php echo ($customer_type == 'retailer') ? 'selected' : ''; ?>>Retailer (30% Discount)</option>
+                            </select>
+                            <div class="invalid-feedback"><?php echo $customer_type_err; ?></div>
+                        </div>
+
+                        <div id="assigned_locations_group" style="display: none;">
+                            <label for="assigned_locations" class="form-label">
+                                <i class="fas fa-warehouse me-2"></i>Assigned Warehouse <span class="text-danger">*</span>
+                            </label>
+                            <select name="assigned_locations" id="assigned_locations" class="form-select <?php echo (!empty($email_err) && $role == 'warehouse_manager' && empty($assigned_locations)) ? 'is-invalid' : ''; ?>" required>
+                                <option value="">Select Warehouse</option>
+                                <?php foreach ($all_locations_options as $loc): ?>
+                                    <?php if ($loc['type'] == 'warehouse'): ?>
+                                        <option value="<?php echo htmlspecialchars($loc['location_id']); ?>"
+                                            <?php echo (in_array($loc['location_id'], $assigned_locations)) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($loc['name']); ?>
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="invalid-feedback">
+                                <?php echo ($role == 'warehouse_manager' && empty($assigned_locations)) ? 'Warehouse Manager must be assigned to a warehouse.' : ''; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success"><i class="fas fa-user-plus"></i> Create User</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const customerTypeGroup = document.getElementById('customer_type_group');
+    const customerTypeSelect = document.getElementById('customer_type');
+    const assignedLocationsGroup = document.getElementById('assigned_locations_group');
+    const assignedLocationsSelect = document.getElementById('assigned_locations');
+
+    function toggleConditionalFieldsVisibility() {
+        // Hide both initially
+        customerTypeGroup.style.display = 'none';
+        assignedLocationsGroup.style.display = 'none';
+
+        // Reset 'required' and selected values for safety
+        customerTypeSelect.removeAttribute('required');
+        assignedLocationsSelect.removeAttribute('required');
+        assignedLocationsSelect.value = '';
+
+        // Show relevant group based on role
+        if (roleSelect.value === 'customer') {
+            customerTypeGroup.style.display = 'block';
+            customerTypeSelect.setAttribute('required', 'required');
+            customerTypeSelect.value = 'direct'; // Default to direct if chosen
+        } else if (roleSelect.value === 'warehouse_manager') {
+            assignedLocationsGroup.style.display = 'block';
+            assignedLocationsSelect.setAttribute('required', 'required');
+        }
+    }
+
+    // Initial call on page load
+    toggleConditionalFieldsVisibility();
+
+    // Event listener for role change
+    roleSelect.addEventListener('change', toggleConditionalFieldsVisibility);
+});
+</script>
