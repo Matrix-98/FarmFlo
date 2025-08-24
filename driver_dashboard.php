@@ -145,3 +145,100 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
     mysqli_stmt_close($stmt);
 }
 ?>
+
+<?php include 'includes/head.php'; ?>
+<?php include 'includes/sidebar.php'; ?>
+
+<div class="content">
+    <?php include 'includes/navbar.php'; ?>
+
+    <div class="container-fluid mt-4">
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-2">Welcome to your Dashboard, <?php echo htmlspecialchars($driver_info['first_name'] . ' ' . $driver_info['last_name']); ?>!</h2>
+                                <p class="mb-0">Manage your deliveries and track your shipments easily.</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1"><i class="fas fa-id-card me-2"></i>License: <?php echo htmlspecialchars($driver_info['license_number']); ?></p>
+                                <p class="mb-0"><i class="fas fa-phone me-2"></i><?php echo htmlspecialchars($driver_info['phone_number']); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-truck fa-2x text-primary mb-2"></i>
+                        <h4><?php echo $shipment_stats['total_shipments']; ?></h4>
+                        <p class="text-muted mb-0">Total Shipments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-route fa-2x text-warning mb-2"></i>
+                        <h4><?php echo $shipment_stats['in_transit_shipments'] + $shipment_stats['out_for_delivery_shipments']; ?></h4>
+                        <p class="text-muted mb-0">Active Deliveries</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4><?php echo $shipment_stats['delivered_shipments']; ?></h4>
+                        <p class="text-muted mb-0">Completed Deliveries</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                        <h4><?php echo $shipment_stats['pending_shipments'] + $shipment_stats['assigned_shipments']; ?></h4>
+                        <p class="text-muted mb-0">Pending Shipments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-truck me-2"></i>View My Shipments
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>driver/tracking_entry.php" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Update Tracking
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>driver/shipment_status.php" class="btn btn-info btn-lg w-100">
+                                    <i class="fas fa-clipboard-check me-2"></i>Update Status
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
