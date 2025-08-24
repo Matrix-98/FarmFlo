@@ -29,3 +29,25 @@ if ($result && mysqli_num_rows($result) > 0) {
 } else {
     echo "<p>No orders found</p>";
 }
+
+// Test Shipment Code
+echo "<h3>Shipment Codes</h3>";
+$sql_shipments = "SELECT shipment_id, shipment_code FROM shipments ORDER BY shipment_id DESC LIMIT 5";
+$result = mysqli_query($conn, $sql_shipments);
+if ($result && mysqli_num_rows($result) > 0) {
+    echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr><th>Shipment ID</th><th>Database Shipment Code</th><th>Generated Shipment Code</th><th>Match?</th></tr>";
+    while ($row = mysqli_fetch_assoc($result)) {
+        $generated_code = getShipmentCode($row['shipment_id']);
+        $match = ($row['shipment_code'] == $generated_code) ? '✅' : '❌';
+        echo "<tr>";
+        echo "<td>" . $row['shipment_id'] . "</td>";
+        echo "<td>" . ($row['shipment_code'] ?: 'NULL') . "</td>";
+        echo "<td>" . $generated_code . "</td>";
+        echo "<td>" . $match . "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>No shipments found</p>";
+}
