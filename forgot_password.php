@@ -138,3 +138,263 @@ if (isset($_GET['token']) && !empty(trim($_GET['token']))) {
             animation: float 20s ease-in-out infinite;
             z-index: -1;
         }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Floating icons */
+        .login-wrapper::before {
+            content: '🔐';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            font-size: 3rem;
+            animation: floatIcon 6s ease-in-out infinite;
+            opacity: 0.3;
+        }
+
+        .login-wrapper::after {
+            content: '📧';
+            position: absolute;
+            bottom: 20%;
+            right: 10%;
+            font-size: 2.5rem;
+            animation: floatIcon 8s ease-in-out infinite reverse;
+            opacity: 0.3;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+            animation: fadeInUp 0.8s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .login-header img {
+            width: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .login-header h3 {
+            font-weight: bold;
+            color: #2d6a4f;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .login-header p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .form-control {
+            padding-left: 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .form-control:focus {
+            border-color: #2E7D32;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+            background: rgba(255,255,255,1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2E7D32;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus + .input-icon {
+            color: #1B5E20;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-success:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        .alert {
+            font-size: 0.9rem;
+            border-radius: 12px;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #721c24;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .password-requirements {
+            background: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .password-requirements ul {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <img src="images/logo.png" alt="Logo">
+            <h3>Reset Password</h3>
+            <p class="text-muted">
+                <?php if (!empty($reset_token)): ?>
+                    Enter your new password
+                <?php else: ?>
+                    Enter your username or email to reset password
+                <?php endif; ?>
+            </p>
+        </div>
+
+        <?php if (!empty($success_message)) : ?>
+            <div class="alert alert-success"><?php echo $success_message; ?></div>
+        <?php endif; ?>
+
+        <?php if (!empty($error_message)) : ?>
+            <div class="alert alert-danger"><?php echo $error_message; ?></div>
+        <?php endif; ?>
+
+        <?php if (!empty($reset_token)): ?>
+            <!-- Reset Password Form -->
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"] . '?token=' . $reset_token); ?>" method="post">
+                <div class="mb-3">
+                    <input type="password" name="password" placeholder="New Password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
+                    <div class="invalid-feedback"><?php echo $password_err; ?></div>
+                    <div class="password-requirements">
+                        <strong>Password Requirements:</strong>
+                        <ul>
+                            <li>At least 8 characters long</li>
+                            <li>One uppercase letter (A-Z)</li>
+                            <li>One lowercase letter (a-z)</li>
+                            <li>One digit (0-9)</li>
+                            <li>One special character (!@#$%^&*)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <input type="password" name="confirm_password" placeholder="Confirm New Password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>">
+                    <div class="invalid-feedback"><?php echo $confirm_password_err; ?></div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" class="btn btn-success btn-lg">Reset Password</button>
+                </div>
+
+                <div class="text-center">
+                    <a href="index.php" class="text-success fw-bold">Back to Login</a>
+                </div>
+            </form>
+        <?php else: ?>
+            <!-- Request Reset Form -->
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                <div class="mb-3 position-relative">
+                    <span class="input-icon"><i class="fas fa-user"></i></span>
+                    <input type="text" name="username_or_email" placeholder="Username or Email" class="form-control <?php echo (!empty($username_or_email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username_or_email; ?>">
+                    <div class="invalid-feedback"><?php echo $username_or_email_err; ?></div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" class="btn btn-success btn-lg">Send Reset Link</button>
+                </div>
+
+                <div class="text-center">
+                    <a href="index.php" class="text-success fw-bold">Back to Login</a>
+                </div>
+            </form>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
