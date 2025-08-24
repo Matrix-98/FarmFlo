@@ -74,3 +74,67 @@ if (isset($_GET['token']) && !empty(trim($_GET['token']))) {
                 } else {
                     $error_message = "Invalid or expired reset token.";
                 }
+                mysqli_stmt_close($stmt_check);
+            }
+        }
+    }
+
+} else { // No token provided in URL, show password reset request form
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (empty(trim($_POST['username_or_email']))) {
+            $username_or_email_err = "Please enter your username.";
+        } else {
+            $username_or_email = trim($_POST['username_or_email']);
+
+            // Check if user exists (by username or email)
+            $sql_find_user = "SELECT user_id FROM users WHERE username = ? OR email = ?";
+            if ($stmt_find = mysqli_prepare($conn, $sql_find_user)) {
+                mysqli_stmt_bind_param($stmt_find, "ss", $username_or_email, $username_or_email);
+                mysqli_stmt_execute($stmt_find);
+                mysqli_stmt_store_result($stmt_find);
+                if (mysqli_stmt_num_rows($stmt_find) == 1) {
+                    // This is where you would normally generate a secure token and email it to the user.
+                    // For this project, we'll simplify and display a dummy link with the username as a token.
+                    // THIS IS NOT SECURE FOR A REAL APP, but is a functional demonstration.
+                    $reset_token = urlencode($username_or_email);
+                    $success_message = "A password reset link has been sent to your email (ignore the message this is only demo). <br> Click this link to reset your password: <a href='" . BASE_URL . "forgot_password.php?token=" . $reset_token . "'>Reset Password</a>";
+                } else {
+                    $username_or_email_err = "No account found with that username or email.";
+                }
+                mysqli_stmt_close($stmt_find);
+            } else {
+                $error_message = "Something went wrong. Please try again later.";
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forgot Password - Agri-Logistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #81C784 100%);
+            font-family: 'Segoe UI', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
