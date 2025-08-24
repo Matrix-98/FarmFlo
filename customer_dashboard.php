@@ -282,3 +282,5 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
 </div>
 
 <?php include 'includes/footer.php'; ?>
+
+<!--Akbor-->
