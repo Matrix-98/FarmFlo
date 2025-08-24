@@ -51,3 +51,25 @@ if ($result && mysqli_num_rows($result) > 0) {
 } else {
     echo "<p>No shipments found</p>";
 }
+
+// Test Product Code
+echo "<h3>Product Codes</h3>";
+$sql_products = "SELECT product_id, product_code FROM products ORDER BY product_id DESC LIMIT 5";
+$result = mysqli_query($conn, $sql_products);
+if ($result && mysqli_num_rows($result) > 0) {
+    echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr><th>Product ID</th><th>Database Product Code</th><th>Generated Product Code</th><th>Match?</th></tr>";
+    while ($row = mysqli_fetch_assoc($result)) {
+        $generated_code = getProductCode($row['product_id']);
+        $match = ($row['product_code'] == $generated_code) ? '✅' : '❌';
+        echo "<tr>";
+        echo "<td>" . $row['product_id'] . "</td>";
+        echo "<td>" . ($row['product_code'] ?: 'NULL') . "</td>";
+        echo "<td>" . $generated_code . "</td>";
+        echo "<td>" . $match . "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>No products found</p>";
+}
