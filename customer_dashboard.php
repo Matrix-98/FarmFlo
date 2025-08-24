@@ -49,3 +49,22 @@ if ($stmt = mysqli_prepare($conn, $sql_orders)) {
     }
     mysqli_stmt_close($stmt);
 }
+
+// Get recent orders
+$sql_recent = "SELECT order_id, order_date, total_amount, status 
+               FROM orders 
+               WHERE customer_id = ? 
+               ORDER BY order_date DESC 
+               LIMIT 5";
+
+$recent_orders = [];
+if ($stmt = mysqli_prepare($conn, $sql_recent)) {
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    if (mysqli_stmt_execute($stmt)) {
+        $result = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($result)) {
+            $recent_orders[] = $row;
+        }
+    }
+    mysqli_stmt_close($stmt);
+}
