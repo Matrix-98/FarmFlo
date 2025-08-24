@@ -34,3 +34,43 @@ if (isset($_GET['token']) && !empty(trim($_GET['token']))) {
         } else {
             $password = trim($_POST['password']);
         }
+
+        // Validate confirm password
+        if (empty(trim($_POST['confirm_password']))) {
+            $confirm_password_err = "Please confirm the new password.";
+        } else {
+            $confirm_password = trim($_POST['confirm_password']);
+            if (empty($password_err) && ($password != $confirm_password)) {
+                $confirm_password_err = "Password did not match.";
+            }
+        }
+
+        if (empty($password_err) && empty($confirm_password_err)) {
+            // In a real application, you'd verify the token against a database table
+            // where you store generated tokens and their expiry dates.
+            // For this demo, we simplified by using the username as the token.
+            $sql_check_token = "SELECT user_id FROM users WHERE username = ?";
+            if ($stmt_check = mysqli_prepare($conn, $sql_check_token)) {
+                mysqli_stmt_bind_param($stmt_check, "s", $reset_token);
+                mysqli_stmt_execute($stmt_check);
+                mysqli_stmt_store_result($stmt_check);
+                if (mysqli_stmt_num_rows($stmt_check) == 1) {
+                    $user_id = 0;
+                    mysqli_stmt_bind_result($stmt_check, $user_id);
+                    mysqli_stmt_fetch($stmt_check);
+
+                    $sql_update_password = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+                    if ($stmt_update = mysqli_prepare($conn, $sql_update_password)) {
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        mysqli_stmt_bind_param($stmt_update, "si", $hashed_password, $user_id);
+                        if (mysqli_stmt_execute($stmt_update)) {
+                            $success_message = "Your password has been successfully reset. You can now log in with your new password.";
+                            // In a real application, invalidate the token here (e.g., delete from tokens table).
+                        } else {
+                            $error_message = "Error resetting password: " . mysqli_error($conn);
+                        }
+                        mysqli_stmt_close($stmt_update);
+                    }
+                } else {
+                    $error_message = "Invalid or expired reset token.";
+                }
