@@ -111,3 +111,43 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
                 </div>
             </div>
         </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+                        <h4><?php echo $total_orders; ?></h4>
+                        <p class="text-muted mb-0">Total Orders</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4><?php echo $pending_orders; ?></h4>
+                        <p class="text-muted mb-0">Pending Orders</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4><?php echo $completed_orders; ?></h4>
+                        <p class="text-muted mb-0">Completed Orders</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                        <h4>৳<?php echo number_format($total_spent, 2); ?></h4>
+                        <p class="text-muted mb-0">Total Spent</p>
+                    </div>
+                </div>
+            </div>
+        </div>
