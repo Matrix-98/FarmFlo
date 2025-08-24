@@ -134,3 +134,127 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);
         }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .login-header img {
+            width: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .login-header h3 {
+            font-weight: bold;
+            color: #2d6a4f;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .login-header p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .form-control {
+            padding-left: 45px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.9);
+        }
+        .form-control:focus {
+            border-color: #2E7D32;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+            background: rgba(255,255,255,1);
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2E7D32;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus + .input-icon {
+            color: #1B5E20;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+        .btn-success:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(46, 125, 50, 0.3);
+        }
+        .alert {
+            font-size: 0.9rem;
+        }
+        a {
+            text-decoration: none;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <img src="images/logo.png" alt="Logo">
+            <h3>FarmFlo</h3>
+            <p class="text-muted">Sign in to manage your logistics</p>
+        </div>
+
+        <?php if (!empty($login_err)) : ?>
+            <div class="alert alert-danger"><?php echo $login_err; ?></div>
+        <?php endif; ?>
+
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <div class="mb-3 position-relative">
+                <span class="input-icon"><i class="fas fa-user"></i></span>
+                <input type="text" name="username" placeholder="Username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
+                <div class="invalid-feedback"><?php echo $username_err; ?></div>
+            </div>
+            <div class="mb-3 position-relative">
+                <span class="input-icon"><i class="fas fa-lock"></i></span>
+                <input type="password" name="password" placeholder="Password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
+                <div class="invalid-feedback"><?php echo $password_err; ?></div>
+            </div>
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-success btn-lg">Login</button>
+            </div>
+            <div class="text-center">
+                <a href="forgot_password.php" class="text-muted me-3">Forgot Password?</a>
+                <a href="register.php" class="text-success fw-bold">Join as Customer</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
