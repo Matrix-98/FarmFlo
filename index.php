@@ -96,3 +96,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             align-items: center;
             position: relative;
         }
+
+        /* Floating icons */
+        .login-wrapper::before {
+            content: '🌾';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            font-size: 3rem;
+            animation: floatIcon 6s ease-in-out infinite;
+            opacity: 0.3;
+        }
+
+        .login-wrapper::after {
+            content: '🚛';
+            position: absolute;
+            bottom: 20%;
+            right: 10%;
+            font-size: 2.5rem;
+            animation: floatIcon 8s ease-in-out infinite reverse;
+            opacity: 0.3;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+            animation: fadeInUp 0.8s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
