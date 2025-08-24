@@ -131,3 +131,247 @@ if ($result = mysqli_query($conn, $sql_inventory)) {
     mysqli_free_result($result);
 }
 ?>
+
+<?php include 'includes/head.php'; ?>
+<?php include 'includes/sidebar.php'; ?>
+
+<div class="content">
+    <?php include 'includes/navbar.php'; ?>
+
+    <div class="container-fluid mt-4">
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-2">Welcome to your Dashboard, <?php echo htmlspecialchars($farm_manager_info['username']); ?>!</h2>
+                                <p class="mb-0">Manage your farm production and monitor crop growth efficiently.</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-1"><i class="fas fa-envelope me-2"></i><?php echo htmlspecialchars($farm_manager_info['email']); ?></p>
+                                <p class="mb-0"><i class="fas fa-phone me-2"></i><?php echo htmlspecialchars($farm_manager_info['phone']); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-seedling fa-2x text-success mb-2"></i>
+                        <h4><?php echo $production_stats['total_productions']; ?></h4>
+                        <p class="text-muted mb-0">Total Productions</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-leaf fa-2x text-warning mb-2"></i>
+                        <h4><?php echo $production_stats['growing_productions'] + $production_stats['harvesting_productions']; ?></h4>
+                        <p class="text-muted mb-0">Active Crops</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-primary mb-2"></i>
+                        <h4><?php echo $production_stats['completed_productions']; ?></h4>
+                        <p class="text-muted mb-0">Completed Harvests</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-weight-hanging fa-2x text-info mb-2"></i>
+                        <h4><?php echo number_format($production_stats['total_harvested_kg'], 1); ?> kg</h4>
+                        <p class="text-muted mb-0">Total Harvested</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <a href="<?php echo BASE_URL; ?>farm_production/" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-leaf me-2"></i>Manage Production
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="<?php echo BASE_URL; ?>products/" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-seedling me-2"></i>Manage Products
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>inventory/" class="btn btn-info btn-lg w-100">
+                                    <i class="fas fa-boxes me-2"></i>View Inventory
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Productions and Recent Harvests -->
+        <div class="row">
+            <!-- Active Productions -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-leaf me-2"></i>Active Productions</h5>
+                        <a href="<?php echo BASE_URL; ?>farm_production/" class="btn btn-sm btn-outline-success">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($active_productions)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Crop</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                        <th>ETA</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($active_productions as $production): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($production['field_name']); ?></td>
+                                            <td>
+                                                <small><?php echo htmlspecialchars($production['product_name']); ?></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<?php
+                                                echo $production['status'] == 'growing' ? 'success' :
+                                                    ($production['status'] == 'harvesting' ? 'warning' : 'info');
+                                                ?>">
+                                                    <?php echo ucfirst($production['status']); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $progress = 0;
+                                                if ($production['harvested_amount_kg'] > 0 && $production['seed_amount_kg'] > 0) {
+                                                    $progress = min(100, ($production['harvested_amount_kg'] / $production['seed_amount_kg']) * 100);
+                                                }
+                                                ?>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" style="width: <?php echo $progress; ?>%">
+                                                        <?php echo number_format($progress, 1); ?>%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <?php echo $production['expected_harvest_date'] ? date('M d', strtotime($production['expected_harvest_date'])) : 'TBD'; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No active productions.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Harvests -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Harvests</h5>
+                        <a href="<?php echo BASE_URL; ?>farm_production/" class="btn btn-sm btn-outline-success">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($recent_harvests)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Crop</th>
+                                        <th>Harvested</th>
+                                        <th>Date</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($recent_harvests as $harvest): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($harvest['field_name']); ?></td>
+                                            <td>
+                                                <small><?php echo htmlspecialchars($harvest['product_name']); ?></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    <?php echo number_format($harvest['harvested_amount_kg'], 1); ?> kg
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php echo $harvest['actual_harvest_date'] ? date('M d, Y', strtotime($harvest['actual_harvest_date'])) : 'N/A'; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No recent harvests.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Summary -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Farm Product Inventory Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h4 class="text-primary"><?php echo $inventory_summary['total_items']; ?></h4>
+                                <p class="text-muted">Total Items</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4 class="text-success"><?php echo number_format($inventory_summary['total_quantity'], 1); ?> kg</h4>
+                                <p class="text-muted">Total Quantity</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4 class="text-info"><?php echo number_format($inventory_summary['available_quantity'], 1); ?> kg</h4>
+                                <p class="text-muted">Available</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h4 class="text-warning"><?php echo number_format($inventory_summary['reserved_quantity'], 1); ?> kg</h4>
+                                <p class="text-muted">Reserved</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>
