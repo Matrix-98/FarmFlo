@@ -68,3 +68,46 @@ if ($stmt = mysqli_prepare($conn, $sql_recent)) {
     }
     mysqli_stmt_close($stmt);
 }
+
+// Get active shipments
+$sql_shipments = "SELECT s.shipment_id, s.order_id, s.status, s.planned_arrival,
+                         ol.name as origin, dl.name as destination
+                  FROM shipments s
+                  JOIN locations ol ON s.origin_location_id = ol.location_id
+                  JOIN locations dl ON s.destination_location_id = dl.location_id
+                  WHERE s.order_id IN (SELECT order_id FROM orders WHERE customer_id = ?)
+                  AND s.status IN ('pending', 'assigned', 'in_transit', 'out_for_delivery')
+                  ORDER BY s.created_at DESC
+                  LIMIT 5";
+
+$active_shipments = [];
+if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    if (mysqli_stmt_execute($stmt)) {
+        $result = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($result)) {
+            $active_shipments[] = $row;
+        }
+    }
+    mysqli_stmt_close($stmt);
+}
+?>
+
+<?php include 'includes/head.php'; ?>
+<?php include 'includes/sidebar.php'; ?>
+
+<div class="content">
+    <?php include 'includes/navbar.php'; ?>
+
+    <div class="container-fluid mt-4">
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h2 class="mb-2">Welcome to your Dashboard, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
+                        <p class="mb-0">Manage your orders and track your shipments easily.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
