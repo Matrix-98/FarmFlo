@@ -271,3 +271,135 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
+<?php include '../includes/head.php'; ?>
+<?php include '../includes/sidebar.php'; ?>
+
+<div class="content">
+    <?php include '../includes/navbar.php'; ?>
+
+    <div class="container-fluid mt-4">
+        <h2 class="mb-4">Edit User: <?php echo htmlspecialchars($username); ?></h2>
+        <a href="<?php echo BASE_URL; ?>users/index.php" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> Back to User List</a>
+
+        <?php
+        if (isset($_SESSION['error_message'])) {
+            echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+            unset($_SESSION['error_message']);
+        }
+        if (isset($_SESSION['success_message'])) {
+            echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+            unset($_SESSION['success_message']);
+        }
+        // Display combined local validation errors if present
+        if (isset($error_message) && !empty($error_message) && $_SERVER["REQUEST_METHOD"] == "POST") {
+            echo '<div class="alert alert-danger">' . $error_message . '</div>';
+        }
+        ?>
+
+        <div class="card p-4 shadow-sm">
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id_param); ?>">
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                    <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($username); ?>" required>
+                    <div class="invalid-feedback"><?php echo $username_err; ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">New Password (Leave blank to keep current)</label>
+                        <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
+                        <div class="invalid-feedback"><?php echo $password_err; ?></div>
+                        <small class="form-text text-muted">
+                            Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character.
+                        </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>">
+                        <div class="invalid-feedback"><?php echo $confirm_password_err; ?></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select name="role" id="role" class="form-select <?php echo (!empty($role_err)) ? 'is-invalid' : ''; ?>"
+                            <?php echo ($user_id_param == $_SESSION['user_id'] && $_SESSION['role'] == 'admin') ? 'disabled' : ''; ?> required>
+                            <option value="">Select Role</option>
+                            <option value="admin" <?php echo ($role == 'admin') ? 'selected' : ''; ?>>Admin</option>
+                            <option value="farm_manager" <?php echo ($role == 'farm_manager') ? 'selected' : ''; ?>>Farm Manager</option>
+                            <option value="warehouse_manager" <?php echo ($role == 'warehouse_manager') ? 'selected' : ''; ?>>Warehouse Manager</option>
+                            <option value="logistics_manager" <?php echo ($role == 'logistics_manager') ? 'selected' : ''; ?>>Logistics Manager</option>
+                            <option value="driver" <?php echo ($role == 'driver') ? 'selected' : ''; ?>>Driver</option>
+                            <option value="customer" <?php echo ($role == 'customer') ? 'selected' : ''; ?>>Customer</option>
+                        </select>
+                        <?php if ($user_id_param == $_SESSION['user_id'] && $_SESSION['role'] == 'admin'): ?>
+                            <input type="hidden" name="role" value="admin">
+                            <small class="form-text text-muted">You cannot change your own admin role.</small>
+                        <?php endif; ?>
+                        <div class="invalid-feedback"><?php echo $role_err; ?></div>
+                    </div>
+                    <div class="col-md-6 mb-3" id="customer_type_group" style="display: <?php echo ($role == 'customer') ? 'block' : 'none'; ?>;">
+                        <label for="customer_type" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                        <select name="customer_type" id="customer_type" class="form-select <?php echo (!empty($customer_type_err)) ? 'is-invalid' : ''; ?>" required>
+                            <option value="">Select Type</option>
+                            <option value="direct" <?php echo ($customer_type == 'direct') ? 'selected' : ''; ?>>Direct Customer</option>
+                            <option value="retailer" <?php echo ($customer_type == 'retailer') ? 'selected' : ''; ?>>Retailer (30% Discount)</option>
+                        </select>
+                        <div class="invalid-feedback"><?php echo $customer_type_err; ?></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($email); ?>" required>
+                    <div class="invalid-feedback"><?php echo $email_err; ?></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                    <input type="text" name="phone" id="phone" class="form-control <?php echo (!empty($phone_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($phone); ?>" required>
+                    <div class="invalid-feedback"><?php echo $phone_err; ?></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Update User</button>
+            </form>
+            <?php if (isset($created_at) || isset($updated_at)): ?>
+                <div class="mt-3 border-top pt-3 text-muted small">
+                    Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
+                    Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('role');
+        const customerTypeGroup = document.getElementById('customer_type_group');
+        const customerTypeSelect = document.getElementById('customer_type');
+
+        function toggleCustomerTypeVisibility() {
+            if (roleSelect.value === 'customer') {
+                customerTypeGroup.style.display = 'block';
+                customerTypeSelect.setAttribute('required', 'required');
+            } else {
+                customerTypeGroup.style.display = 'none';
+                customerTypeSelect.removeAttribute('required');
+                customerTypeSelect.value = 'direct';
+            }
+        }
+
+        // Initial call on page load
+        toggleCustomerTypeVisibility();
+
+        // Event listener for role change
+        roleSelect.addEventListener('change', toggleCustomerTypeVisibility);
+    });
+</script>
