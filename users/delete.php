@@ -38,6 +38,7 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
         }
         mysqli_stmt_close($stmt_orders);
     }
+
     // Note: The driver's user_id is set to NULL on delete, so that's not a block.
     // The documents table uploaded_by is set to NULL on delete, so that's not a block.
 
