@@ -69,10 +69,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($name_err) && empty($address_err) && empty($type_err) && empty($latitude_err) && empty($longitude_err) && empty($capacity_kg_err) && empty($capacity_m3_err)) {
         $logged_in_user_id = $_SESSION['user_id'];
-        
+
         // Start transaction
         mysqli_begin_transaction($conn);
-        
+
         try {
             // Insert location
             $sql = "INSERT INTO locations (location_code, name, address, type, latitude, longitude, capacity_kg, capacity_m3, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -81,10 +81,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Generate unique location code with retry mechanism
                 $max_retries = 5;
                 $location_code = null;
-                
+
                 for ($i = 0; $i < $max_retries; $i++) {
                     $location_code = generateLocationId();
-                    
+
                     // Check if this code already exists
                     $check_sql = "SELECT COUNT(*) as count FROM locations WHERE location_code = ?";
                     $check_stmt = mysqli_prepare($conn, $check_sql);
@@ -93,19 +93,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $check_result = mysqli_stmt_get_result($check_stmt);
                     $check_row = mysqli_fetch_assoc($check_result);
                     mysqli_stmt_close($check_stmt);
-                    
+
                     if ($check_row['count'] == 0) {
                         break; // Code is unique, proceed
                     }
-                    
+
                     // If we're on the last retry, generate a timestamp-based code
                     if ($i == $max_retries - 1) {
                         $location_code = 'L' . date('y') . str_pad(mt_rand(100, 999), 3, '0', STR_PAD_LEFT);
                     }
                 }
-                
+
                 mysqli_stmt_bind_param($stmt, "ssssddddi", $param_location_code, $param_name, $param_address, $param_type, $param_latitude, $param_longitude, $param_capacity_kg, $param_capacity_m3, $param_created_by);
-                
+
                 $param_location_code = $location_code;
 
                 $param_name = $name;
@@ -119,11 +119,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 if (mysqli_stmt_execute($stmt)) {
                     $location_id = mysqli_insert_id($conn);
-                    
+
                     // If warehouse type and warehouse manager is selected, assign the manager
                     if ($type == 'warehouse' && !empty($_POST['warehouse_manager_id'])) {
                         $warehouse_manager_id = $_POST['warehouse_manager_id'];
-                        
+
                         $sql_assign = "INSERT INTO user_assigned_locations (user_id, location_id) VALUES (?, ?)";
                         if ($stmt_assign = mysqli_prepare($conn, $sql_assign)) {
                             mysqli_stmt_bind_param($stmt_assign, "ii", $warehouse_manager_id, $location_id);
@@ -131,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             mysqli_stmt_close($stmt_assign);
                         }
                     }
-                    
+
                     mysqli_commit($conn);
                     $_SESSION['success_message'] = "Location added successfully!" . ($type == 'warehouse' && !empty($_POST['warehouse_manager_id']) ? " Warehouse manager assigned." : "");
                     header("location: " . BASE_URL . "locations/index.php");
@@ -213,7 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="invalid-feedback"><?php echo $capacity_m3_err; ?></div>
                         </div>
                     </div>
-                    
+
                     <!-- Warehouse Manager Assignment -->
                     <div class="mb-3">
                         <label for="warehouse_manager_id" class="form-label">Assign Warehouse Manager</label>
@@ -240,7 +240,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <small class="form-text text-muted">Select a warehouse manager to assign this warehouse to them. They will only be able to access this specific warehouse.</small>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="latitude" class="form-label">Latitude <span class="text-danger">*</span></label>
@@ -263,25 +263,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php include '../includes/footer.php'; ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const typeSelect = document.getElementById('type');
-    const capacityGroup = document.getElementById('capacity_group');
-    const capacityKgInput = document.getElementById('capacity_kg');
-    const capacityM3Input = document.getElementById('capacity_m3');
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const capacityGroup = document.getElementById('capacity_group');
+        const capacityKgInput = document.getElementById('capacity_kg');
+        const capacityM3Input = document.getElementById('capacity_m3');
 
-    function toggleCapacityFields() {
-        if (typeSelect.value === 'warehouse') {
-            capacityGroup.style.display = 'block';
-            capacityKgInput.setAttribute('required', 'required');
-            capacityM3Input.setAttribute('required', 'required');
-        } else {
-            capacityGroup.style.display = 'none';
-            capacityKgInput.removeAttribute('required');
-            capacityM3Input.removeAttribute('required');
+        function toggleCapacityFields() {
+            if (typeSelect.value === 'warehouse') {
+                capacityGroup.style.display = 'block';
+                capacityKgInput.setAttribute('required', 'required');
+                capacityM3Input.setAttribute('required', 'required');
+            } else {
+                capacityGroup.style.display = 'none';
+                capacityKgInput.removeAttribute('required');
+                capacityM3Input.removeAttribute('required');
+            }
         }
-    }
 
-    toggleCapacityFields();
-    typeSelect.addEventListener('change', toggleCapacityFields);
-});
+        toggleCapacityFields();
+        typeSelect.addEventListener('change', toggleCapacityFields);
+    });
 </script>
