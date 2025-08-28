@@ -87,3 +87,5 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
 
 header("location: " . BASE_URL . "users/manage_requests.php");
 exit();
+
+#
