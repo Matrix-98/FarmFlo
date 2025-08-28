@@ -99,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $customer_type = trim($_POST["customer_type"]);
         }
     } else {
-        $customer_type = 'direct'; 
+        $customer_type = 'direct';
     }
 
     // Validate Email and check for uniqueness
@@ -206,7 +206,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Combine all errors for display
         $error_message = implode("<br>", array_filter([$username_err, $password_err, $confirm_password_err, $role_err, $email_err, $phone_err, $customer_type_err]));
         if ($role == 'warehouse_manager' && empty($assigned_locations)) { // Add specific error for unassigned warehouse manager
-             $error_message .= "<br>Warehouse Manager must be assigned to at least one warehouse.";
+            $error_message .= "<br>Warehouse Manager must be assigned to at least one warehouse.";
         }
     }
 }
@@ -214,13 +214,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <?php include '../includes/head.php'; ?>
 <style>
-.form-label i {
-    color: #6c757d;
-}
+    .form-label i {
+        color: #6c757d;
+    }
 
-.form-text i {
-    color: #0d6efd;
-}
+    .form-text i {
+        color: #0d6efd;
+    }
 </style>
 <?php include '../includes/sidebar.php'; ?>
 
@@ -339,38 +339,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php include '../includes/footer.php'; ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('role');
-    const customerTypeGroup = document.getElementById('customer_type_group');
-    const customerTypeSelect = document.getElementById('customer_type');
-    const assignedLocationsGroup = document.getElementById('assigned_locations_group');
-    const assignedLocationsSelect = document.getElementById('assigned_locations');
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('role');
+        const customerTypeGroup = document.getElementById('customer_type_group');
+        const customerTypeSelect = document.getElementById('customer_type');
+        const assignedLocationsGroup = document.getElementById('assigned_locations_group');
+        const assignedLocationsSelect = document.getElementById('assigned_locations');
 
-    function toggleConditionalFieldsVisibility() {
-        // Hide both initially
-        customerTypeGroup.style.display = 'none';
-        assignedLocationsGroup.style.display = 'none';
+        function toggleConditionalFieldsVisibility() {
+            // Hide both initially
+            customerTypeGroup.style.display = 'none';
+            assignedLocationsGroup.style.display = 'none';
 
-        // Reset 'required' and selected values for safety
-        customerTypeSelect.removeAttribute('required');
-        assignedLocationsSelect.removeAttribute('required');
-        assignedLocationsSelect.value = '';
+            // Reset 'required' and selected values for safety
+            customerTypeSelect.removeAttribute('required');
+            assignedLocationsSelect.removeAttribute('required');
+            assignedLocationsSelect.value = '';
 
-        // Show relevant group based on role
-        if (roleSelect.value === 'customer') {
-            customerTypeGroup.style.display = 'block';
-            customerTypeSelect.setAttribute('required', 'required');
-            customerTypeSelect.value = 'direct'; // Default to direct if chosen
-        } else if (roleSelect.value === 'warehouse_manager') {
-            assignedLocationsGroup.style.display = 'block';
-            assignedLocationsSelect.setAttribute('required', 'required');
+            // Show relevant group based on role
+            if (roleSelect.value === 'customer') {
+                customerTypeGroup.style.display = 'block';
+                customerTypeSelect.setAttribute('required', 'required');
+                customerTypeSelect.value = 'direct'; // Default to direct if chosen
+            } else if (roleSelect.value === 'warehouse_manager') {
+                assignedLocationsGroup.style.display = 'block';
+                assignedLocationsSelect.setAttribute('required', 'required');
+            }
         }
-    }
 
-    // Initial call on page load
-    toggleConditionalFieldsVisibility();
+        // Initial call on page load
+        toggleConditionalFieldsVisibility();
 
-    // Event listener for role change
-    roleSelect.addEventListener('change', toggleConditionalFieldsVisibility);
-});
+        // Event listener for role change
+        roleSelect.addEventListener('change', toggleConditionalFieldsVisibility);
+    });
 </script>
+
+<!--Akbor-->
