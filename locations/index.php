@@ -156,3 +156,62 @@ include '../includes/sidebar.php';
                                                     </small>
                                                 </div>
                                             <?php endif; ?>
+
+                                            <a href="<?php echo BASE_URL; ?>inventory/?location=<?php echo $warehouse['location_id']; ?>" class="btn btn-sm btn-outline-primary w-100">
+                                                <i class="fas fa-eye me-1"></i>View Inventory
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Location List -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Location List</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportToCSV()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($locations)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="locationsTable">
+                            <thead>
+                            <tr>
+                                <th>Location Code</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Address</th>
+                                <th>Capacity</th>
+                                <th>Manager</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($locations as $location): ?>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary"><?php echo htmlspecialchars($location['location_code']); ?></span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                        <span class="fw-semibold"><?php echo htmlspecialchars($location['name']); ?></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<?php echo $location['type'] == 'warehouse' ? 'primary' : ($location['type'] == 'farm' ? 'success' : 'info'); ?>">
+                                        <?php echo ucfirst($location['type']); ?>
+                                    </span>
+                                </td>
+                                <td>
