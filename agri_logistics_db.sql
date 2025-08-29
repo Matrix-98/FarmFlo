@@ -115,3 +115,117 @@ CREATE TABLE `farm_production` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
+
+--
+-- Table structure for table `inventory`
+--
+
+CREATE TABLE `inventory` (
+                             `inventory_id` int(11) NOT NULL,
+                             `inventory_code` varchar(6) NOT NULL,
+                             `product_id` int(11) NOT NULL,
+                             `location_id` int(11) NOT NULL,
+                             `quantity_kg` decimal(10,2) NOT NULL,
+                             `stage` enum('available','reserved','in-transit','sold','lost','damaged') NOT NULL DEFAULT 'available',
+                             `order_id` int(11) DEFAULT NULL,
+                             `expiry_date` date NOT NULL,
+                             `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                             `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                             `created_by` int(11) DEFAULT NULL,
+                             `updated_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `locations`
+--
+
+CREATE TABLE `locations` (
+                             `location_id` int(11) NOT NULL,
+                             `location_code` varchar(6) NOT NULL,
+                             `name` varchar(100) NOT NULL,
+                             `address` text DEFAULT NULL,
+                             `type` enum('farm','warehouse','processing_plant','delivery_point','other') NOT NULL,
+                             `latitude` decimal(10,8) DEFAULT NULL,
+                             `longitude` decimal(11,8) DEFAULT NULL,
+                             `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                             `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                             `created_by` int(11) DEFAULT NULL,
+                             `updated_by` int(11) DEFAULT NULL,
+                             `capacity_kg` decimal(10,2) DEFAULT NULL,
+                             `capacity_m3` decimal(10,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `orders`
+--
+
+CREATE TABLE `orders` (
+                          `order_id` int(11) NOT NULL,
+                          `order_code` varchar(6) NOT NULL,
+                          `customer_id` int(11) NOT NULL,
+                          `total_amount` decimal(10,2) NOT NULL,
+                          `status` enum('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
+                          `shipping_address` text NOT NULL,
+                          `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                          `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                          `order_date` timestamp NOT NULL DEFAULT current_timestamp(),
+                          `created_by` int(11) DEFAULT NULL,
+                          `updated_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_products`
+--
+
+CREATE TABLE `order_products` (
+                                  `order_product_id` int(11) NOT NULL,
+                                  `order_id` int(11) NOT NULL,
+                                  `product_id` int(11) NOT NULL,
+                                  `quantity_kg` decimal(10,2) NOT NULL,
+                                  `price_at_order` decimal(10,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `products`
+--
+
+CREATE TABLE `products` (
+                            `product_id` int(11) NOT NULL,
+                            `product_code` varchar(6) NOT NULL,
+                            `name` varchar(150) NOT NULL,
+                            `item_type` varchar(100) NOT NULL,
+                            `batch_id` varchar(50) DEFAULT NULL,
+                            `price_per_unit` decimal(10,2) DEFAULT NULL,
+                            `packaging_details` varchar(255) DEFAULT NULL,
+                            `description` text DEFAULT NULL,
+                            `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                            `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                            `created_by` int(11) DEFAULT NULL,
+                            `updated_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `registration_requests`
+--
+
+CREATE TABLE `registration_requests` (
+                                         `request_id` int(11) NOT NULL,
+                                         `username` varchar(50) NOT NULL,
+                                         `password_hash` varchar(255) NOT NULL,
+                                         `customer_type` enum('direct','retailer') NOT NULL,
+                                         `email` varchar(100) NOT NULL,
+                                         `phone` varchar(20) DEFAULT NULL,
+                                         `request_date` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
