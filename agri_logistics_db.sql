@@ -229,3 +229,161 @@ CREATE TABLE `registration_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
+
+--
+-- Table structure for table `shipments`
+--
+
+CREATE TABLE `shipments` (
+                             `shipment_id` int(11) NOT NULL,
+                             `shipment_code` varchar(6) NOT NULL,
+                             `origin_location_id` int(11) NOT NULL,
+                             `destination_location_id` int(11) NOT NULL,
+                             `vehicle_id` int(11) DEFAULT NULL,
+                             `driver_id` int(11) DEFAULT NULL,
+                             `planned_departure` datetime NOT NULL,
+                             `planned_arrival` datetime NOT NULL,
+                             `actual_departure` datetime DEFAULT NULL,
+                             `actual_arrival` datetime DEFAULT NULL,
+                             `status` enum('pending','assigned','in_transit','out_for_delivery','delivered','failed') NOT NULL DEFAULT 'pending',
+                             `total_weight_kg` decimal(10,2) DEFAULT NULL,
+                             `total_volume_m3` decimal(10,2) DEFAULT NULL,
+                             `notes` text DEFAULT NULL,
+                             `damage_notes` text DEFAULT NULL,
+                             `failure_photo` varchar(255) DEFAULT NULL COMMENT 'Photo path for failed shipments',
+                             `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                             `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                             `created_by` int(11) DEFAULT NULL,
+                             `updated_by` int(11) DEFAULT NULL,
+                             `order_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `shipment_products`
+--
+
+CREATE TABLE `shipment_products` (
+                                     `shipment_id` int(11) NOT NULL,
+                                     `product_id` int(11) NOT NULL,
+                                     `quantity_kg` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `supply_chain_events`
+--
+
+CREATE TABLE `supply_chain_events` (
+                                       `event_id` int(11) NOT NULL,
+                                       `event_type` enum('production_started','harvested','in_transit','delivered','damaged','expired','shipment_started','shipment_out_for_delivery','shipment_delivered','shipment_failed','shipment_reverted') NOT NULL,
+                                       `product_id` int(11) DEFAULT NULL,
+                                       `quantity_kg` decimal(10,2) DEFAULT NULL,
+                                       `location_id` int(11) DEFAULT NULL,
+                                       `shipment_id` int(11) DEFAULT NULL,
+                                       `order_id` int(11) DEFAULT NULL,
+                                       `event_date` timestamp NOT NULL DEFAULT current_timestamp(),
+                                       `notes` text DEFAULT NULL,
+                                       `created_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tracking_data`
+--
+
+CREATE TABLE `tracking_data` (
+                                 `tracking_id` int(11) NOT NULL,
+                                 `shipment_id` int(11) NOT NULL,
+                                 `recorded_at` datetime NOT NULL DEFAULT current_timestamp(),
+                                 `latitude` decimal(10,8) DEFAULT NULL,
+                                 `longitude` decimal(11,8) DEFAULT NULL,
+                                 `temperature` decimal(5,2) DEFAULT NULL,
+                                 `humidity` decimal(5,2) DEFAULT NULL,
+                                 `delivery_status` enum('in_transit','out_for_delivery','delivered','failed') DEFAULT 'in_transit',
+                                 `order_notes` text DEFAULT NULL,
+                                 `recorded_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+                         `user_id` int(11) NOT NULL,
+                         `user_code` varchar(6) NOT NULL,
+                         `username` varchar(50) NOT NULL,
+                         `password_hash` varchar(255) NOT NULL,
+                         `role` enum('admin','farm_manager','warehouse_manager','logistics_manager','driver','customer') NOT NULL,
+                         `email` varchar(100) DEFAULT NULL,
+                         `phone` varchar(20) DEFAULT NULL,
+                         `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+                         `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                         `created_by` int(11) DEFAULT NULL,
+                         `updated_by` int(11) DEFAULT NULL,
+                         `customer_type` enum('direct','retailer') NOT NULL DEFAULT 'direct'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `user_code`, `username`, `password_hash`, `role`, `email`, `phone`, `created_at`, `updated_at`, `created_by`, `updated_by`, `customer_type`) VALUES
+                                                                                                                                                                                 (1, 'U00001', 'admin', '$2y$10$l891hwXiSray2IaMDrQ4IOhdwqgZeKOJu7MnDhNpveeLTjJa7AmnW', 'admin', 'admin@gmail.com', '01611111111', '2025-07-23 16:29:05', '2025-07-27 13:59:03', 1, 1, 'direct'),
+                                                                                                                                                                                 (9, 'U00009', 'customer', '$2y$10$Ld0raCzp.4BHOMzy7qhSCeV.eLvkusAL25RdDnt1E5sfwV2No6n4u', 'customer', 'customer@gmail.com', '01699999999', '2025-07-27 14:00:18', '2025-07-27 14:00:18', 1, NULL, 'direct'),
+                                                                                                                                                                                 (10, 'U00010', 'farmManager', '$2y$10$iqZqUeACG26RskGRQkvCa..AIwL3ICqwXcpgQ3YjdgsXzE6pxFIZS', 'farm_manager', 'farmManager@gmail.com', '01600000000', '2025-07-27 14:01:40', '2025-07-27 14:01:40', 1, NULL, 'direct'),
+                                                                                                                                                                                 (11, 'U00011', 'warehouseManager', '$2y$10$u39pKYlENK/0KuZtQ1L.K..nWfkK0PqImWDyozdYbaq9x9Va8bIgK', 'warehouse_manager', 'warehoueManager@gmail.com', '01688888888', '2025-07-27 14:03:13', '2025-07-27 14:03:13', 1, NULL, 'direct'),
+                                                                                                                                                                                 (12, 'U00012', 'retailer', '$2y$10$rZvmUs5t7jgWeH3OPfls2.u7IYmih2StiKi9.JDwHBm3dM006rRd6', 'customer', 'retailer@gmail.com', '01744444444', '2025-07-27 14:04:06', '2025-07-27 14:04:06', 1, NULL, 'retailer'),
+                                                                                                                                                                                 (13, 'U00013', 'logisticsManager', '$2y$10$lxRCrmtpwqMMedStcOLRieoVt8ZOn0mVyRYcy/pvhDH4BDS5XwvPa', 'logistics_manager', 'logisticsManager@gmail.com', '01566666666', '2025-07-27 14:05:03', '2025-07-27 14:05:03', 1, NULL, 'direct'),
+                                                                                                                                                                                 (14, 'U00014', 'driver', '$2y$10$zTkbq7zSa.pRgxLLevYy9OsU/4vNi43kbeMBDNUeHTljIr0Xfv8oW', 'driver', 'driver@gmail.com', '01683674924', '2025-07-27 16:05:15', '2025-08-08 21:33:53', 1, 1, 'direct'),
+                                                                                                                                                                                 (15, 'U00015', 'driver1', '$2y$10$gUmv4U9H6fGU6Si9GdKB3.l2Mdu9UpvLtkNKQXuASUHypJ9PaIBSS', 'driver', 'driver1@gmail.com', '01834562354', '2025-07-27 16:20:21', '2025-07-27 16:20:21', 1, NULL, 'direct'),
+                                                                                                                                                                                 (16, 'U00016', 'driver2', '$2y$10$zkF4JVDnl61eAovFZ/Saouk8IRjE9IuIIkmo.4sIfWdo7W9tQ0rka', 'driver', 'driver2@gmail.com', '01635264783', '2025-07-27 18:34:55', '2025-07-27 18:36:09', 1, 1, 'direct');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_assigned_locations`
+--
+
+CREATE TABLE `user_assigned_locations` (
+                                           `user_id` int(11) NOT NULL,
+                                           `location_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_dashboard_visits`
+--
+
+CREATE TABLE `user_dashboard_visits` (
+                                         `visit_id` int(11) NOT NULL,
+                                         `user_id` int(11) NOT NULL,
+                                         `role` varchar(50) NOT NULL,
+                                         `last_visit` timestamp NOT NULL DEFAULT current_timestamp(),
+                                         `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_dashboard_visits`
+--
+
+INSERT INTO `user_dashboard_visits` (`visit_id`, `user_id`, `role`, `last_visit`, `created_at`) VALUES
+                                                                                                    (1, 1, 'admin', '2025-08-14 00:27:59', '2025-08-13 18:18:24'),
+                                                                                                    (2, 9, 'customer', '2025-08-13 19:50:07', '2025-08-13 18:18:24'),
+                                                                                                    (3, 10, 'farm_manager', '2025-08-13 20:40:21', '2025-08-13 18:18:24'),
+                                                                                                    (4, 11, 'warehouse_manager', '2025-08-13 23:37:36', '2025-08-13 18:18:24'),
+                                                                                                    (5, 12, 'customer', '2025-08-13 23:37:49', '2025-08-13 18:18:24'),
+                                                                                                    (6, 13, 'logistics_manager', '2025-08-13 23:40:12', '2025-08-13 18:18:24'),
+                                                                                                    (7, 14, 'driver', '2025-08-13 23:03:12', '2025-08-13 18:18:24'),
+                                                                                                    (8, 15, 'driver', '2025-08-14 00:17:20', '2025-08-13 18:18:24'),
+                                                                                                    (9, 16, 'driver', '2025-08-13 18:18:24', '2025-08-13 18:18:24'),
+                                                                                                    (10, 21, 'warehouse_manager', '2025-08-13 20:51:37', '2025-08-13 18:18:24'),
+                                                                                                    (36, 23, 'customer', '2025-08-13 20:37:47', '2025-08-13 20:36:48');
+
+-- --------------------------------------------------------
