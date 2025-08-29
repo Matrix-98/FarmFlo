@@ -151,3 +151,134 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
                 </div>
             </div>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>orders/create.php" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-plus me-2"></i>Place New Order
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>orders/" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-shopping-cart me-2"></i>View My Orders
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-info btn-lg w-100">
+                                    <i class="fas fa-truck me-2"></i>Track Shipments
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders and Active Shipments -->
+        <div class="row">
+            <!-- Recent Orders -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Recent Orders</h5>
+                        <a href="<?php echo BASE_URL; ?>orders/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($recent_orders)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($recent_orders as $order): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($order['order_id']); ?></td>
+                                            <td><?php echo date('M d, Y', strtotime($order['order_date'])); ?></td>
+                                            <td>৳<?php echo number_format($order['total_amount'], 2); ?></td>
+                                            <td>
+                                                <span class="badge bg-<?php
+                                                echo $order['status'] == 'completed' ? 'success' :
+                                                        ($order['status'] == 'pending' ? 'warning' : 'secondary');
+                                                ?>">
+                                                    <?php echo ucfirst($order['status']); ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No orders yet. <a href="<?php echo BASE_URL; ?>orders/create.php">Place your first order!</a></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Shipments -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Active Shipments</h5>
+                        <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($active_shipments)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Shipment ID</th>
+                                        <th>Route</th>
+                                        <th>Status</th>
+                                        <th>ETA</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($active_shipments as $shipment): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($shipment['shipment_id']); ?></td>
+                                            <td>
+                                                <small><?php echo htmlspecialchars($shipment['origin']); ?> → <?php echo htmlspecialchars($shipment['destination']); ?></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<?php
+                                                echo $shipment['status'] == 'in_transit' ? 'primary' :
+                                                        ($shipment['status'] == 'out_for_delivery' ? 'info' : 'warning');
+                                                ?>">
+                                                    <?php echo ucwords(str_replace('_', ' ', $shipment['status'])); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php echo $shipment['planned_arrival'] ? date('M d', strtotime($shipment['planned_arrival'])) : 'TBD'; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No active shipments.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>

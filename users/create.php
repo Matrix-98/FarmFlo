@@ -374,5 +374,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         roleSelect.addEventListener('change', toggleConditionalFieldsVisibility);
     });
 </script>
-
-<!--Akbor-->
+#
