@@ -215,3 +215,95 @@ include '../includes/sidebar.php';
                                     </span>
                                 </td>
                                 <td>
+                                    <small class="text-muted">
+                                        <?php echo htmlspecialchars($location['address']); ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <?php if ($location['type'] == 'warehouse'): ?>
+                                        <div class="small">
+                                            <div>Weight: <?php echo number_format($location['capacity_kg'] ?? 0, 2); ?> kg</div>
+                                            <div>Volume: <?php echo number_format($location['capacity_m3'] ?? 0, 3); ?> m³</div>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">N/A</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($location['type'] == 'warehouse' && $location['assigned_managers']): ?>
+                                        <span class="badge bg-success">
+                                            <?php echo htmlspecialchars($location['assigned_managers']); ?>
+                                        </span>
+                                    <?php elseif ($location['type'] == 'warehouse'): ?>
+                                        <span class="badge bg-warning">Unassigned</span>
+                                    <?php else: ?>
+                                        <span class="text-muted">N/A</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="<?php echo BASE_URL; ?>locations/edit.php?id=<?php echo $location['location_id']; ?>"
+                                           class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="<?php echo BASE_URL; ?>locations/delete.php?id=<?php echo $location['location_id']; ?>"
+                                           class="btn btn-sm btn-outline-danger" title="Delete"
+                                           onclick="return confirm('Are you sure you want to delete this location? This will also delete all associated inventory records. This action cannot be undone.');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-map-marker-alt text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">No Locations Found</h4>
+                            <p class="text-muted">Start by adding your first location.</p>
+                            <a href="<?php echo BASE_URL; ?>locations/create.php" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add First Location
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    function exportToCSV() {
+        const table = document.getElementById('locationsTable');
+        const rows = table.querySelectorAll('tr');
+        let csv = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cols = row.querySelectorAll('td, th');
+            let csvRow = [];
+
+            for (let j = 0; j < cols.length - 1; j++) { // Exclude the Actions column
+                let text = cols[j].innerText.replace(/"/g, '""');
+                csvRow.push('"' + text + '"');
+            }
+
+            csv.push(csvRow.join(','));
+        }
+
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'locations_export.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<?php include '../includes/footer.php'; ?>
