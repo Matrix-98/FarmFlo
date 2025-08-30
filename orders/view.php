@@ -187,9 +187,11 @@ if (isset($_GET['id']) && !empty(trim($_GET['id']))) {
             <?php endif; ?>
         </div>
         
-        <div class="mt-4 text-center">
-             <?php if ($user_role == 'admin' || $user_role == 'logistics_manager'): ?>
-                <a href="<?php echo BASE_URL; ?>orders/update.php?id=<?php echo htmlspecialchars($order['order_id']); ?>" class="btn btn-warning me-2"><i class="fas fa-clipboard-check"></i> Update Order Status</a>
+        <div class="mt-4 text-center d-flex flex-wrap gap-2 justify-content-center">
+            <button type="button" class="btn btn-success" onclick="printPODInline()"><i class="fas fa-print"></i> Print POD</button>
+            <button type="button" class="btn btn-secondary" onclick="downloadPODPdfInline()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+            <?php if ($user_role == 'admin' || $user_role == 'logistics_manager'): ?>
+                <a href="<?php echo BASE_URL; ?>orders/update.php?id=<?php echo htmlspecialchars($order['order_id']); ?>" class="btn btn-warning"><i class="fas fa-clipboard-check"></i> Update Order Status</a>
                 <a href="<?php echo BASE_URL; ?>orders/delete.php?id=<?php echo htmlspecialchars($order['order_id']); ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this order?');"><i class="fas fa-trash-alt"></i> Delete Order</a>
             <?php endif; ?>
         </div>
@@ -198,3 +200,156 @@ if (isset($_GET['id']) && !empty(trim($_GET['id']))) {
 </div>
 
 <?php include '../includes/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+async function buildPODNode(){
+    const container = document.createElement('div');
+    container.className = 'invoice p-4';
+    container.style.background = '#fff';
+    container.style.color = '#000';
+    container.style.maxWidth = '900px';
+    container.style.margin = '0 auto';
+    container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <div style="font-size:24px;font-weight:700;color:#2d6a4f">Farm Flo</div>
+                <div style="font-size:18px;font-weight:600;">INVOICE</div>
+            </div>
+            <div class="text-end">
+                <small>Invoice No:</small>
+                <div class="fw-bold"><?php echo htmlspecialchars(getOrderCode($order['order_id'] ?? null)); ?></div>
+                <small>Date:</small>
+                <div class="fw-bold"><?php echo htmlspecialchars(date('d/m/y', strtotime($order['order_date'] ?? date('Y-m-d')))); ?></div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="text-muted">Billing To</h6>
+                <div class="fw-bold"><?php echo htmlspecialchars($order['customer_name'] ?? ''); ?></div>
+                <div>Phone: <?php echo htmlspecialchars($order['customer_phone'] ?? ''); ?></div>
+                <div>Address: <?php echo htmlspecialchars($order['shipping_address'] ?? ''); ?></div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Sent From</h6>
+                <div class="fw-bold">FarmFlow</div>
+                <div>Phone: 01676225090</div>
+                <div>Address: Uttara, Dhaka</div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:10%">ID</th>
+                        <th>Product</th>
+                        <th style="width:15%" class="text-end">Price</th>
+                        <th style="width:15%" class="text-end">Quantity</th>
+                        <th style="width:15%" class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($order_products as $product):
+                    $qty=(float)$product['quantity_kg'];
+                    $price=(float)($product['price_at_order'] ?? 0);
+                    $tot=$qty*$price; ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars(getProductCode($product['product_id'])); ?></td>
+                        <td><?php echo htmlspecialchars($product['product_name']); ?></td>
+                        <td class="text-end">৳<?php echo number_format($price,2); ?></td>
+                        <td class="text-end"><?php echo number_format($qty,2); ?></td>
+                        <td class="text-end">৳<?php echo number_format($tot,2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-end">
+            <table class="table w-auto">
+                <tr>
+                    <th class="text-end">Total:</th>
+                    <td class="text-end">৳<?php echo number_format($order['total_amount'] ?? 0, 2); ?></td>
+                </tr>
+            </table>
+        </div>
+    `;
+    return container;
+}
+
+function openPrintWindow(content){
+    const w = window.open('', '_blank');
+    if (!w) return alert('Popup blocked');
+    w.document.write('<html><head><title>Print POD</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head><body>'+content.outerHTML+'<script>window.onload=function(){setTimeout(function(){window.print();window.close();},300)}<\\/script></body></html>');
+    w.document.close();
+}
+
+async function printPODInline(){
+    const node = await buildPODNode();
+    // Attach to DOM, set hidden off-screen for screen, visible for print
+    node.style.position = 'fixed';
+    node.style.left = '-10000px';
+    node.style.top = '0';
+    node.style.zIndex = '99999';
+    document.body.appendChild(node);
+
+    const css = document.createElement('style');
+    css.setAttribute('data-print-style', '1');
+    css.textContent = `@media print {
+        body * { visibility: hidden !important; }
+        .invoice, .invoice * { visibility: visible !important; }
+        .invoice { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; z-index: 99999 !important; }
+    }`;
+    document.head.appendChild(css);
+
+    const cleanup = () => {
+        try { document.head.removeChild(css); } catch (e) {}
+        try { document.body.removeChild(node); } catch (e) {}
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup, { once: true });
+
+    // Wait for layout/paint before printing
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    setTimeout(() => {
+        try { window.print(); } catch (e) { cleanup(); }
+        // Fallback cleanup in case afterprint doesn't fire
+        setTimeout(cleanup, 2000);
+    }, 100);
+}
+
+async function downloadPODPdfInline(){
+    try {
+        const node = await buildPODNode();
+        // Attach to DOM to ensure correct layout
+        node.style.position = 'fixed';
+        node.style.left = '-10000px';
+        node.style.top = '0';
+        document.body.appendChild(node);
+
+        const jsPdfNS = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf : (window.jsPDF ? { jsPDF: window.jsPDF } : null);
+        if (!jsPdfNS) { alert('PDF library failed to load. Please check your internet connection.'); document.body.removeChild(node); return; }
+        const { jsPDF } = jsPdfNS;
+
+        const canvas = await html2canvas(node, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        document.body.removeChild(node);
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const maxWidth = pageWidth - 40; // margins
+        const maxHeight = pageHeight - 40;
+        let imgWidth = maxWidth;
+        let imgHeight = canvas.height * imgWidth / canvas.width;
+        if (imgHeight > maxHeight) {
+            imgHeight = maxHeight;
+            imgWidth = canvas.width * imgHeight / canvas.height;
+        }
+        pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth)/2, 20, imgWidth, imgHeight);
+        pdf.save('POD-<?php echo htmlspecialchars(getOrderCode($order['order_id'] ?? null)); ?>.pdf');
+    } catch (e) {
+        console.error(e);
+        alert('Failed to generate PDF.');
+    }
+}
+</script>

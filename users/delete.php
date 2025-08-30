@@ -21,7 +21,7 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
         header("location: " . BASE_URL . "users/index.php");
         exit;
     }
-
+    
     // --- IMPORTANT FIX: Check for dependent records before deletion ---
     $can_delete = true;
     $error_message_local = '';
@@ -38,10 +38,10 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
         }
         mysqli_stmt_close($stmt_orders);
     }
-
+    
     // Note: The driver's user_id is set to NULL on delete, so that's not a block.
     // The documents table uploaded_by is set to NULL on delete, so that's not a block.
-
+    
     if ($can_delete) {
         $sql = "DELETE FROM users WHERE user_id = ?";
         if ($stmt = mysqli_prepare($conn, $sql)) {
@@ -68,5 +68,3 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
 
 header("location: " . BASE_URL . "users/index.php");
 exit();
-
-#

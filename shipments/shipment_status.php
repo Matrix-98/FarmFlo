@@ -41,8 +41,8 @@ $sql = "SELECT
             COUNT(sp.product_id) as product_count,
             SUM(sp.quantity_kg) as total_quantity
         FROM shipments s
-        JOIN orders o ON s.order_id = o.order_id
-        JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN orders o ON s.order_id = o.order_id
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
         LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
         LEFT JOIN drivers d ON s.driver_id = d.driver_id
         LEFT JOIN shipment_products sp ON s.shipment_id = sp.shipment_id
@@ -75,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_status'])) {
         $_SESSION['error_message'] = "Invalid status selected.";
     } else {
         // Update shipment status
-        $result = updateShipmentStatus($shipment_id, $new_status, $damage_notes);
+        $result = updateShipmentStatus($shipment_id, $new_status, $_SESSION['user_id'], NULL, NULL, $damage_notes);
         
         if ($result) {
             // Add tracking notes if provided
@@ -194,7 +194,11 @@ include '../includes/head.php';
                     <div class="card-body">
                         <!-- Customer Info -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-2">Customer Details</h6>
+                            <h6 class="text-muted mb-2">
+                                <?php echo $shipment['customer_name'] ? 'Customer Details' : 'Shipment Details'; ?>
+                            </h6>
+                            <?php if ($shipment['customer_name']): ?>
+                            <!-- Order-based shipment -->
                             <div class="d-flex align-items-center mb-2">
                                 <i class="fas fa-user text-primary me-2"></i>
                                 <span class="fw-semibold"><?php echo htmlspecialchars($shipment['customer_name']); ?></span>
@@ -207,6 +211,21 @@ include '../includes/head.php';
                                 <i class="fas fa-map-marker-alt text-danger me-2 mt-1"></i>
                                 <small><?php echo htmlspecialchars($shipment['shipping_address']); ?></small>
                             </div>
+                            <?php else: ?>
+                            <!-- Request-based shipment -->
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-truck-loading text-info me-2"></i>
+                                <span class="fw-semibold">Farm Production Shipment</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-warehouse text-warning me-2"></i>
+                                <span>Farm to Warehouse</span>
+                            </div>
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-info-circle text-secondary me-2 mt-1"></i>
+                                <small>Created from shipment request</small>
+                            </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Driver Info -->

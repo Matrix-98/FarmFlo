@@ -166,9 +166,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $customer_type = trim($_POST["customer_type"]);
         }
     } else {
-        $customer_type = 'direct';
+        $customer_type = 'direct'; 
     }
-
+    
     // Validate email
     $email_new = trim($_POST["email"]);
     if (!empty($email_new) && !filter_var(trim($email_new), FILTER_VALIDATE_EMAIL)) {
@@ -224,7 +224,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sql_update_parts[] = "role = ?";
         $bind_types .= "s";
         $bind_params[] = $role;
-
+        
         $sql_update_parts[] = "customer_type = ?";
         $bind_types .= "s";
         $bind_params[] = $customer_type;
@@ -368,10 +368,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Update User</button>
             </form>
             <?php if (isset($created_at) || isset($updated_at)): ?>
-                <div class="mt-3 border-top pt-3 text-muted small">
-                    Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
-                    Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
-                </div>
+            <div class="mt-3 border-top pt-3 text-muted small">
+                Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
+                Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -380,29 +380,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php include '../includes/footer.php'; ?>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const roleSelect = document.getElementById('role');
-        const customerTypeGroup = document.getElementById('customer_type_group');
-        const customerTypeSelect = document.getElementById('customer_type');
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const customerTypeGroup = document.getElementById('customer_type_group');
+    const customerTypeSelect = document.getElementById('customer_type');
 
-        function toggleCustomerTypeVisibility() {
-            if (roleSelect.value === 'customer') {
-                customerTypeGroup.style.display = 'block';
-                customerTypeSelect.setAttribute('required', 'required');
-            } else {
-                customerTypeGroup.style.display = 'none';
-                customerTypeSelect.removeAttribute('required');
-                customerTypeSelect.value = 'direct';
-            }
+    function toggleCustomerTypeVisibility() {
+        if (roleSelect.value === 'customer') {
+            customerTypeGroup.style.display = 'block';
+            customerTypeSelect.setAttribute('required', 'required');
+        } else {
+            customerTypeGroup.style.display = 'none';
+            customerTypeSelect.removeAttribute('required');
+            customerTypeSelect.value = 'direct'; 
         }
+    }
 
-        // Initial call on page load
-        toggleCustomerTypeVisibility();
+    // Initial call on page load
+    toggleCustomerTypeVisibility();
 
-        // Event listener for role change
-        roleSelect.addEventListener('change', toggleCustomerTypeVisibility);
-    });
+    // Event listener for role change
+    roleSelect.addEventListener('change', toggleCustomerTypeVisibility);
+});
 </script>
-
-
-#

@@ -95,7 +95,7 @@ function checkLocationCapacity($location_id, $required_weight_kg) {
  * Update inventory when order is processed
  * This function handles the simple case: move reserved inventory to sold/lost based on status
  */
-function updateInventoryForOrder($order_id, $status = 'sold') {
+function updateInventoryForOrder($order_id, $status = 'sold', $user_id = 1) {
     global $conn;
     
     mysqli_begin_transaction($conn);
@@ -132,16 +132,16 @@ function updateInventoryForOrder($order_id, $status = 'sold') {
                         // Move inventory to the target stage (sold or lost)
                         if ($quantity_to_move == $inventory['quantity_kg']) {
                             // Move entire inventory record
-                            $sql_update = "UPDATE inventory SET stage = ?, updated_at = NOW() WHERE inventory_id = ?";
+                            $sql_update = "UPDATE inventory SET stage = ?, updated_at = NOW(), updated_by = ? WHERE inventory_id = ?";
                             $update_stmt = mysqli_prepare($conn, $sql_update);
-                            mysqli_stmt_bind_param($update_stmt, "si", $status, $inventory['inventory_id']);
+                            mysqli_stmt_bind_param($update_stmt, "sii", $status, $user_id, $inventory['inventory_id']);
                             mysqli_stmt_execute($update_stmt);
                             mysqli_stmt_close($update_stmt);
                         } else {
                             // Reduce quantity from reserved and create new record in target stage
-                            $sql_reduce = "UPDATE inventory SET quantity_kg = quantity_kg - ?, updated_at = NOW() WHERE inventory_id = ?";
+                            $sql_reduce = "UPDATE inventory SET quantity_kg = quantity_kg - ?, updated_at = NOW(), updated_by = ? WHERE inventory_id = ?";
                             $reduce_stmt = mysqli_prepare($conn, $sql_reduce);
-                            mysqli_stmt_bind_param($reduce_stmt, "di", $quantity_to_move, $inventory['inventory_id']);
+                            mysqli_stmt_bind_param($reduce_stmt, "dii", $quantity_to_move, $user_id, $inventory['inventory_id']);
                             mysqli_stmt_execute($reduce_stmt);
                             mysqli_stmt_close($reduce_stmt);
                             
@@ -150,8 +150,7 @@ function updateInventoryForOrder($order_id, $status = 'sold') {
                             $sql_create = "INSERT INTO inventory (inventory_code, product_id, location_id, quantity_kg, stage, order_id, created_at, created_by) 
                                           VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)";
                             $create_stmt = mysqli_prepare($conn, $sql_create);
-                            $created_by = $inventory['created_by'] ?? 1;
-                            mysqli_stmt_bind_param($create_stmt, "siidsii", $inventory_code, $order_item['product_id'], $inventory['location_id'], $quantity_to_move, $status, $order_id, $created_by);
+                            mysqli_stmt_bind_param($create_stmt, "siidsii", $inventory_code, $order_item['product_id'], $inventory['location_id'], $quantity_to_move, $status, $order_id, $user_id);
                             mysqli_stmt_execute($create_stmt);
                             mysqli_stmt_close($create_stmt);
                         }
@@ -362,131 +361,107 @@ function getInventoryStats() {
  * Update shipment status and handle inventory accordingly
  * Simplified version that handles the core business logic
  */
-function updateShipmentStatus($shipment_id, $new_status, $logged_in_user_id, $actual_departure = NULL, $actual_arrival = NULL, $damage_notes = '', $failure_photo = NULL) {
+function updateShipmentStatus($shipment_id, $new_status, $logged_in_user_id, $planned_departure = NULL, $planned_arrival = NULL, $notes = '', $failure_photo = NULL) {
     global $conn;
     
-    mysqli_begin_transaction($conn);
+    // Validate status
+    $valid_statuses = ['pending', 'assigned', 'in_transit', 'out_for_delivery', 'delivered', 'failed', 'cancelled'];
+    if (!in_array($new_status, $valid_statuses)) {
+        return false;
+    }
     
-    try {
-        // Get shipment details
-        $sql_shipment = "SELECT s.order_id, s.status as current_status
-                         FROM shipments s 
-                         WHERE s.shipment_id = ?";
+    // Get current shipment info
+    $sql_get = "SELECT s.*, sr.request_code, sr.product_id, sr.quantity_kg 
+                FROM shipments s 
+                LEFT JOIN shipment_requests sr ON s.request_id = sr.request_id
+                WHERE s.shipment_id = ?";
+    
+    if ($stmt = mysqli_prepare($conn, $sql_get)) {
+        mysqli_stmt_bind_param($stmt, "i", $shipment_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $shipment = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
         
-        if ($stmt = mysqli_prepare($conn, $sql_shipment)) {
-            mysqli_stmt_bind_param($stmt, "i", $shipment_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            $shipment = mysqli_fetch_assoc($result);
-            mysqli_stmt_close($stmt);
-            
-            if (!$shipment) {
-                throw new Exception("Shipment not found.");
-            }
-            
-            $order_id = $shipment['order_id'];
-            $current_status = $shipment['current_status'];
-            
-            // Update shipment status with optional fields
-            $sql_update = "UPDATE shipments SET status = ?, updated_at = NOW()";
-            $params = [$new_status];
-            $types = "s";
-            
-            if ($actual_departure !== NULL) {
-                $sql_update .= ", actual_departure = ?";
-                $params[] = $actual_departure;
-                $types .= "s";
-            }
-            
-            if ($actual_arrival !== NULL) {
-                $sql_update .= ", actual_arrival = ?";
-                $params[] = $actual_arrival;
-                $types .= "s";
-            }
-            
-            if ($failure_photo !== NULL) {
-                $sql_update .= ", failure_photo = ?";
-                $params[] = $failure_photo;
-                $types .= "s";
-            }
-            
-            $sql_update .= ", updated_by = ? WHERE shipment_id = ?";
-            $params[] = $logged_in_user_id;
-            $params[] = $shipment_id;
-            $types .= "ii";
-            
-            $update_stmt = mysqli_prepare($conn, $sql_update);
-            mysqli_stmt_bind_param($update_stmt, $types, ...$params);
-            mysqli_stmt_execute($update_stmt);
-            mysqli_stmt_close($update_stmt);
-            
-            // Handle inventory and order status based on status change
-            if ($new_status != $current_status) {
-                error_log("Shipment status change: $current_status -> $new_status for shipment $shipment_id");
-                
-                // Handle final status changes
-                if ($new_status == 'delivered') {
-                    // Move reserved inventory to sold
-                    updateInventoryForOrder($order_id, 'sold');
-                    
-                    // Update order status to completed
-                    $sql_order = "UPDATE orders SET status = 'completed', updated_at = NOW() WHERE order_id = ?";
-                    $order_stmt = mysqli_prepare($conn, $sql_order);
-                    mysqli_stmt_bind_param($order_stmt, "i", $order_id);
-                    mysqli_stmt_execute($order_stmt);
-                    mysqli_stmt_close($order_stmt);
-                    
-                    // Log supply chain event
-                    logSupplyChainEvent($conn, 'shipment_delivered', $shipment_id, $logged_in_user_id);
-                }
-                else if ($new_status == 'failed' || $new_status == 'cancelled') {
-                    // Move reserved inventory to lost
-                    updateInventoryForOrder($order_id, 'lost');
-                    
-                    // Update order status
-                    $order_status = ($new_status == 'failed') ? 'failed' : 'cancelled';
-                    $sql_order = "UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?";
-                    $order_stmt = mysqli_prepare($conn, $sql_order);
-                    mysqli_stmt_bind_param($order_stmt, "si", $order_status, $order_id);
-                    mysqli_stmt_execute($order_stmt);
-                    mysqli_stmt_close($order_stmt);
-                    
-                    // Add damage notes if provided
-                    if (!empty($damage_notes)) {
-                        $sql_notes = "UPDATE shipments SET damage_notes = ? WHERE shipment_id = ?";
-                        $notes_stmt = mysqli_prepare($conn, $sql_notes);
-                        mysqli_stmt_bind_param($notes_stmt, "si", $damage_notes, $shipment_id);
-                        mysqli_stmt_execute($notes_stmt);
-                        mysqli_stmt_close($notes_stmt);
-                    }
-                    
-                    // Log supply chain event
-                    logSupplyChainEvent($conn, 'shipment_failed', $shipment_id, $logged_in_user_id);
-                }
-                // Handle intermediate status changes (keep inventory in reserved)
-                else if (in_array($new_status, ['pending', 'assigned', 'in_transit', 'out_for_delivery'])) {
-                    // For intermediate statuses, keep inventory in reserved stage
-                    // Just update order status to pending
-                    $sql_order = "UPDATE orders SET status = 'pending', updated_at = NOW() WHERE order_id = ?";
-                    $order_stmt = mysqli_prepare($conn, $sql_order);
-                    mysqli_stmt_bind_param($order_stmt, "i", $order_id);
-                    mysqli_stmt_execute($order_stmt);
-                    mysqli_stmt_close($order_stmt);
-                    
-                    // Log supply chain event
-                    logSupplyChainEvent($conn, 'shipment_status_changed', $shipment_id, $logged_in_user_id);
-                }
-            }
+        if (!$shipment) {
+            return false;
         }
         
-        mysqli_commit($conn);
-        return true;
+        // Update shipment status
+        $sql_update = "UPDATE shipments SET status = ?, updated_by = ?, updated_at = NOW()";
+        $params = [$new_status, $logged_in_user_id];
+        $types = "si";
         
-    } catch (Exception $e) {
-        mysqli_rollback($conn);
-        error_log("Error updating shipment status: " . $e->getMessage());
-        throw $e;
+        // Add optional fields
+        if ($planned_departure) {
+            $sql_update .= ", planned_departure = ?";
+            $params[] = $planned_departure;
+            $types .= "s";
+        }
+        if ($planned_arrival) {
+            $sql_update .= ", planned_arrival = ?";
+            $params[] = $planned_arrival;
+            $types .= "s";
+        }
+        if ($notes) {
+            $sql_update .= ", notes = CONCAT(notes, '\n', ?)";
+            $params[] = $notes;
+            $types .= "s";
+        }
+        if ($failure_photo) {
+            $sql_update .= ", failure_photo = ?";
+            $params[] = $failure_photo;
+            $types .= "s";
+        }
+        if ($new_status == 'delivered') {
+            $sql_update .= ", actual_arrival = NOW()";
+        }
+        
+        $sql_update .= " WHERE shipment_id = ?";
+        $params[] = $shipment_id;
+        $types .= "i";
+        
+        if ($stmt = mysqli_prepare($conn, $sql_update)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+            $success = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            
+            if ($success) {
+                // Log the event
+                logSupplyChainEvent($conn, 'shipment_status_updated', $shipment_id, $logged_in_user_id);
+                
+                // If delivered, handle inventory based on shipment type
+                if ($new_status == 'delivered') {
+                    // Check if this is a farm request shipment (no order_id) or regular order shipment
+                    if ($shipment['order_id']) {
+                        // Regular order shipment - deduct inventory and calculate sold/loss
+                        error_log("Processing regular order shipment delivery for shipment_id: $shipment_id, order_id: " . $shipment['order_id']);
+                        updateInventoryForOrder($shipment['order_id'], 'sold', $logged_in_user_id);
+                    } else {
+                        // Farm request shipment - add inventory to destination warehouse
+                        error_log("Processing farm request shipment delivery for shipment_id: $shipment_id, request_id: " . $shipment['request_id']);
+                        $result = createInventoryFromDeliveredShipment($shipment_id);
+                        if ($result) {
+                            error_log("Successfully created inventory from farm request shipment: $shipment_id");
+                        } else {
+                            error_log("Failed to create inventory from farm request shipment: $shipment_id");
+                        }
+                    }
+                } elseif ($new_status == 'failed') {
+                    // Check if this is a farm request shipment or regular order shipment
+                    if ($shipment['order_id']) {
+                        // Regular order shipment - handle loss calculation
+                        updateInventoryForOrder($shipment['order_id'], 'lost', $logged_in_user_id);
+                    }
+                    // For farm request shipments, no loss calculation needed
+                }
+                
+                return true;
+            }
+        }
     }
+    
+    return false;
 }
 
 /**
@@ -614,7 +589,7 @@ function moveInventoryStage($conn, $product_id, $location_id, $quantity_kg, $fro
 function logSupplyChainEvent($conn, $event_type, $shipment_id, $user_id, $product_id = NULL, $quantity_kg = NULL, $location_id = NULL, $order_id = NULL, $notes = NULL) {
     try {
         // For shipment events, we don't need product_id and quantity_kg
-        if (in_array($event_type, ['shipment_started', 'shipment_out_for_delivery', 'shipment_delivered', 'shipment_failed', 'shipment_reverted', 'shipment_status_changed', 'shipment_assigned', 'shipment_in_transit'])) {
+        if (in_array($event_type, ['shipment_started', 'shipment_out_for_delivery', 'shipment_delivered', 'shipment_failed', 'shipment_reverted', 'shipment_status_changed', 'shipment_assigned', 'shipment_in_transit', 'shipment_status_updated', 'inventory_created'])) {
             $sql_event = "INSERT INTO supply_chain_events (event_type, shipment_id, event_date, created_by) 
                           VALUES (?, ?, NOW(), ?)";
             $stmt_event = mysqli_prepare($conn, $sql_event);
@@ -891,14 +866,14 @@ function validateInventoryCapacity($conn, $location_id, $product_id, $quantity, 
         $new_volume -= ($quantity * 0.001);
     } elseif ($operation == 'update' && $existing_inventory_id) {
         // Get current quantity of the inventory being updated
-        $sql_current = "SELECT quantity FROM inventory WHERE inventory_id = ?";
+        $sql_current = "SELECT quantity_kg FROM inventory WHERE inventory_id = ?";
         $current_quantity = 0;
         if ($stmt = mysqli_prepare($conn, $sql_current)) {
             mysqli_stmt_bind_param($stmt, "i", $existing_inventory_id);
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
             $row = mysqli_fetch_assoc($result);
-            $current_quantity = $row['quantity'] ?? 0;
+            $current_quantity = $row['quantity_kg'] ?? 0;
             mysqli_stmt_close($stmt);
         }
         
@@ -1477,5 +1452,115 @@ function getDetailedInventoryInfo($conn, $product_id = null) {
     }
     
     return $info;
+}
+
+/**
+ * Create inventory from delivered shipment
+ * Adds products to destination warehouse with +30 days expiry
+ */
+function createInventoryFromDeliveredShipment($shipment_id) {
+    global $conn;
+    
+    error_log("=== Starting createInventoryFromDeliveredShipment for shipment_id: $shipment_id ===");
+    
+    // Get shipment details with request information using request_id
+    $sql = "SELECT s.*, sr.product_id, sr.quantity_kg, p.name as product_name, p.price_per_unit
+            FROM shipments s
+            LEFT JOIN shipment_requests sr ON s.request_id = sr.request_id
+            LEFT JOIN products p ON sr.product_id = p.product_id
+            WHERE s.shipment_id = ? AND s.status = 'delivered'";
+    
+    error_log("Querying shipment data for shipment_id: $shipment_id");
+    
+    if ($stmt = mysqli_prepare($conn, $sql)) {
+        mysqli_stmt_bind_param($stmt, "i", $shipment_id);
+        $execute_result = mysqli_stmt_execute($stmt);
+        
+        if (!$execute_result) {
+            error_log("Failed to execute shipment query: " . mysqli_error($conn));
+            mysqli_stmt_close($stmt);
+            return false;
+        }
+        
+        $result = mysqli_stmt_get_result($stmt);
+        $shipment = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        
+        error_log("Shipment data retrieved: " . ($shipment ? "SUCCESS" : "FAILED"));
+        if ($shipment) {
+            error_log("Shipment details: request_id=" . $shipment['request_id'] . 
+                     ", product_id=" . $shipment['product_id'] . 
+                     ", quantity_kg=" . $shipment['quantity_kg'] . 
+                     ", destination_location_id=" . $shipment['destination_location_id']);
+        }
+        
+        if (!$shipment || !$shipment['product_id']) {
+            error_log("No valid shipment or product found for shipment_id: " . $shipment_id);
+            return false;
+        }
+        
+        // Calculate expiry date (+30 days from shipment creation)
+        $expiry_date = date('Y-m-d', strtotime($shipment['created_at'] . ' +30 days'));
+        
+        // Generate inventory code
+        require_once 'id_generator.php';
+        $inventory_code = generateInventoryId();
+        
+        error_log("Creating inventory with: Product ID: " . $shipment['product_id'] . 
+                 ", Destination Location: " . $shipment['destination_location_id'] . 
+                 ", Quantity: " . $shipment['quantity_kg'] . 
+                 ", Expiry: " . $expiry_date . 
+                 ", Inventory Code: " . $inventory_code);
+        
+        // Create inventory record
+        $sql_insert = "INSERT INTO inventory (inventory_code, product_id, location_id, quantity_kg, 
+                       stage, expiry_date, created_by) 
+                       VALUES (?, ?, ?, ?, 'available', ?, ?)";
+        
+        if ($stmt = mysqli_prepare($conn, $sql_insert)) {
+            $user_id = $_SESSION['user_id'] ?? 1; // Fallback to admin user if session not available
+            
+            error_log("Preparing to insert with parameters: inventory_code=$inventory_code, product_id=" . $shipment['product_id'] . 
+                     ", location_id=" . $shipment['destination_location_id'] . 
+                     ", quantity_kg=" . $shipment['quantity_kg'] . 
+                     ", expiry_date=$expiry_date, user_id=$user_id");
+            
+            mysqli_stmt_bind_param($stmt, "siidsi", $inventory_code, $shipment['product_id'], 
+                                 $shipment['destination_location_id'], $shipment['quantity_kg'], 
+                                 $expiry_date, $user_id);
+            
+            $success = mysqli_stmt_execute($stmt);
+            
+            if (!$success) {
+                error_log("Failed to execute inventory insert: " . mysqli_error($conn));
+                error_log("MySQL Error: " . mysqli_stmt_error($stmt));
+            } else {
+                error_log("Inventory insert executed successfully");
+            }
+            
+            mysqli_stmt_close($stmt);
+            
+            if ($success) {
+                // Log the event
+                logSupplyChainEvent($conn, 'inventory_created', $shipment_id, $user_id, 
+                                   $shipment['product_id'], $shipment['quantity_kg'], 
+                                   $shipment['destination_location_id'], null, 
+                                   "Inventory created from delivered farm request shipment. Product: " . $shipment['product_name'] . 
+                                   ", Quantity: " . $shipment['quantity_kg'] . " kg, Expiry: " . $expiry_date);
+                
+                error_log("Successfully created inventory from delivered farm request shipment. Shipment ID: $shipment_id, Product: " . $shipment['product_name'] . ", Quantity: " . $shipment['quantity_kg'] . " kg, Destination: " . $shipment['destination_location_id']);
+                return true;
+            } else {
+                error_log("Failed to create inventory record for shipment_id: " . $shipment_id);
+            }
+        } else {
+            error_log("Failed to prepare inventory insert statement for shipment_id: " . $shipment_id . ". Error: " . mysqli_error($conn));
+        }
+    } else {
+        error_log("Failed to prepare shipment query for shipment_id: " . $shipment_id . ". Error: " . mysqli_error($conn));
+    }
+    
+    error_log("=== Ending createInventoryFromDeliveredShipment for shipment_id: $shipment_id (FAILED) ===");
+    return false;
 }
 ?>

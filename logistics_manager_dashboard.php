@@ -48,14 +48,14 @@ $sql_shipment_stats = "SELECT
 FROM shipments";
 
 $shipment_stats = [
-        'total_shipments' => 0,
-        'pending_shipments' => 0,
-        'assigned_shipments' => 0,
-        'in_transit_shipments' => 0,
-        'out_for_delivery_shipments' => 0,
-        'delivered_shipments' => 0,
-        'failed_shipments' => 0,
-        'total_weight_shipped' => 0
+    'total_shipments' => 0,
+    'pending_shipments' => 0,
+    'assigned_shipments' => 0,
+    'in_transit_shipments' => 0,
+    'out_for_delivery_shipments' => 0,
+    'delivered_shipments' => 0,
+    'failed_shipments' => 0,
+    'total_weight_shipped' => 0
 ];
 
 if ($result = mysqli_query($conn, $sql_shipment_stats)) {
@@ -69,8 +69,8 @@ $sql_active = "SELECT s.shipment_id, s.status, s.planned_departure, s.planned_ar
                       d.first_name as driver_name, v.license_plate,
                       s.total_weight_kg
                FROM shipments s
-               JOIN orders o ON s.order_id = o.order_id
-               JOIN users u ON o.customer_id = u.user_id
+               LEFT JOIN orders o ON s.order_id = o.order_id
+               LEFT JOIN users u ON o.customer_id = u.user_id
                LEFT JOIN drivers d ON s.driver_id = d.driver_id
                LEFT JOIN vehicles v ON s.vehicle_id = v.vehicle_id
                WHERE s.status IN ('pending', 'assigned', 'in_transit', 'out_for_delivery')
@@ -234,18 +234,18 @@ include 'includes/head.php';
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Customer</th>
-                                        <th>Driver</th>
-                                        <th>Vehicle</th>
-                                        <th>Status</th>
-                                        <th>Weight</th>
-                                        <th>ETA</th>
-                                    </tr>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Customer</th>
+                                            <th>Driver</th>
+                                            <th>Vehicle</th>
+                                            <th>Status</th>
+                                            <th>Weight</th>
+                                            <th>ETA</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($active_shipments as $shipment): ?>
+                                        <?php foreach ($active_shipments as $shipment): ?>
                                         <tr>
                                             <td><?php echo $shipment['shipment_id']; ?></td>
                                             <td><?php echo htmlspecialchars($shipment['customer_name']); ?></td>
@@ -256,9 +256,9 @@ include 'includes/head.php';
                                                 <?php echo $shipment['license_plate'] ? htmlspecialchars($shipment['license_plate']) : '<span class="text-muted">Not Assigned</span>'; ?>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $shipment['status'] == 'in_transit' ? 'primary' :
-                                                        ($shipment['status'] == 'out_for_delivery' ? 'warning' : 'info');
+                                                <span class="badge bg-<?php 
+                                                    echo $shipment['status'] == 'in_transit' ? 'primary' : 
+                                                        ($shipment['status'] == 'out_for_delivery' ? 'warning' : 'info'); 
                                                 ?>">
                                                     <?php echo ucfirst(str_replace('_', ' ', $shipment['status'])); ?>
                                                 </span>
@@ -268,7 +268,7 @@ include 'includes/head.php';
                                                 <?php echo date('M d, H:i', strtotime($shipment['planned_arrival'])); ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -291,15 +291,15 @@ include 'includes/head.php';
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Vehicle</th>
-                                        <th>Type</th>
-                                        <th>Capacity</th>
-                                        <th>Status</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Vehicle</th>
+                                            <th>Type</th>
+                                            <th>Capacity</th>
+                                            <th>Status</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($available_vehicles as $vehicle): ?>
+                                        <?php foreach ($available_vehicles as $vehicle): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($vehicle['license_plate']); ?></td>
                                             <td><?php echo htmlspecialchars($vehicle['type']); ?></td>
@@ -310,7 +310,7 @@ include 'includes/head.php';
                                                 </span>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>

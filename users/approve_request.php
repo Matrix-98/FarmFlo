@@ -42,14 +42,14 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
         if ($stmt_insert_user = mysqli_prepare($conn, $sql_insert_user)) {
             $role_customer = 'customer'; // New users from requests are always 'customer' role
             $user_code = generateUserId(); // Generate unique user code
-            mysqli_stmt_bind_param($stmt_insert_user, "sssssssi",
+            mysqli_stmt_bind_param($stmt_insert_user, "sssssssi", 
                 $user_code,
-                $request_data['username'],
-                $request_data['password_hash'],
-                $role_customer,
-                $request_data['customer_type'],
-                $request_data['email'],
-                $request_data['phone'],
+                $request_data['username'], 
+                $request_data['password_hash'], 
+                $role_customer, 
+                $request_data['customer_type'], 
+                $request_data['email'], 
+                $request_data['phone'], 
                 $logged_in_admin_id
             );
 
@@ -87,5 +87,3 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
 
 header("location: " . BASE_URL . "users/manage_requests.php");
 exit();
-
-#

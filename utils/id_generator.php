@@ -321,33 +321,116 @@ function generateFarmProductionId() {
     
     $year = date('y'); // Last 2 digits of current year
     
-    // Check if production_code column exists
-    $check_column = "SHOW COLUMNS FROM farm_production LIKE 'production_code'";
-    $result_check = mysqli_query($conn, $check_column);
+    // Get all existing codes for this year to find the next available number
+    $sql = "SELECT production_code FROM farm_production 
+            WHERE production_code LIKE 'FP{$year}%' 
+            ORDER BY production_code";
+    $result = mysqli_query($conn, $sql);
     
-    if (mysqli_num_rows($result_check) > 0) {
-        // Column exists, use the new logic
-        $sql = "SELECT MAX(CAST(SUBSTRING(production_code, 4) AS UNSIGNED)) as max_num 
-                FROM farm_production 
-                WHERE production_code LIKE 'FP{$year}%'";
-        $result = mysqli_query($conn, $sql);
-        if ($result && $row = mysqli_fetch_assoc($result)) {
-            $next_num = ($row['max_num'] ?? 0) + 1;
-        } else {
-            $next_num = 1;
+    if ($result) {
+        $existing_codes = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $existing_codes[] = $row['production_code'];
         }
-    } else {
-        // Column doesn't exist, use production_id as fallback
-        $sql = "SELECT MAX(production_id) as max_num FROM farm_production";
-        $result = mysqli_query($conn, $sql);
-        if ($result && $row = mysqli_fetch_assoc($result)) {
-            $next_num = ($row['max_num'] ?? 0) + 1;
-        } else {
-            $next_num = 1;
+        
+        // Find the next available number
+        $next_num = 1;
+        while (true) {
+            $test_code = 'FP' . $year . str_pad($next_num, 3, '0', STR_PAD_LEFT);
+            
+            if (!in_array($test_code, $existing_codes)) {
+                return $test_code;
+            }
+            
+            $next_num++;
+            
+            // Safety check to prevent infinite loop
+            if ($next_num > 999) {
+                break;
+            }
         }
     }
     
-    return 'FP' . $year . str_pad($next_num, 3, '0', STR_PAD_LEFT);
+    // Fallback: generate timestamp-based code
+    $timestamp = time();
+    $random = mt_rand(100, 999);
+    return 'FP' . $year . substr($timestamp, -3) . $random;
+}
+
+/**
+ * Generate a unique farm production ID with guaranteed uniqueness
+ * Format: FP + YY + 2 digits (e.g., FP2501, FP2502, etc.)
+ */
+function generateUniqueFarmProductionId() {
+    global $conn;
+    
+    $year = date('y'); // Last 2 digits of current year
+    
+    // Get all existing codes for this year
+    $sql = "SELECT production_code FROM farm_production 
+            WHERE production_code LIKE 'FP{$year}%' 
+            ORDER BY production_code";
+    $result = mysqli_query($conn, $sql);
+    
+    if ($result) {
+        $existing_codes = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $existing_codes[] = $row['production_code'];
+        }
+        
+        // Find the next available 2-digit number
+        for ($next_num = 1; $next_num <= 99; $next_num++) {
+            $test_code = 'FP' . $year . str_pad($next_num, 2, '0', STR_PAD_LEFT);
+            
+            if (!in_array($test_code, $existing_codes)) {
+                return $test_code;
+            }
+        }
+    }
+    
+    // If all numbers 1-99 are taken, use timestamp-based approach
+    $timestamp = time();
+    $random = mt_rand(10, 99);
+    return 'FP' . $year . $random;
+}
+
+/**
+ * Generate a meaningful 6-digit shipment request ID
+ * Format: SR + YY + MM + 3 digits (e.g., SR250101001, SR250102002, etc.)
+ * YY = last 2 digits of current year, MM = current month, 3 digits for sequence
+ */
+function generateShipmentRequestId() {
+    global $conn;
+    $prefix = 'SR';
+    $year = date('y');
+    $month = date('m');
+    
+    // Get the last request for this year/month
+    $sql = "SELECT request_code FROM shipment_requests 
+            WHERE request_code LIKE ? 
+            ORDER BY request_code DESC 
+            LIMIT 1";
+    
+    $pattern = $prefix . $year . $month . '%';
+    
+    if ($stmt = mysqli_prepare($conn, $sql)) {
+        mysqli_stmt_bind_param($stmt, 's', $pattern);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        
+        if ($row = mysqli_fetch_assoc($result)) {
+            $lastCode = $row['request_code'];
+            $lastNumber = intval(substr($lastCode, 6)); // Extract the number part
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        mysqli_stmt_close($stmt);
+        return $prefix . $year . $month . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+    
+    return $prefix . $year . $month . '001';
 }
 
 /**

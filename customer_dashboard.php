@@ -196,29 +196,29 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Date</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($recent_orders as $order): ?>
+                                        <?php foreach ($recent_orders as $order): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($order['order_id']); ?></td>
                                             <td><?php echo date('M d, Y', strtotime($order['order_date'])); ?></td>
                                             <td>৳<?php echo number_format($order['total_amount'], 2); ?></td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $order['status'] == 'completed' ? 'success' :
-                                                        ($order['status'] == 'pending' ? 'warning' : 'secondary');
+                                                <span class="badge bg-<?php 
+                                                    echo $order['status'] == 'completed' ? 'success' : 
+                                                        ($order['status'] == 'pending' ? 'warning' : 'secondary'); 
                                                 ?>">
                                                     <?php echo ucfirst($order['status']); ?>
                                                 </span>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -241,24 +241,24 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Shipment ID</th>
-                                        <th>Route</th>
-                                        <th>Status</th>
-                                        <th>ETA</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Shipment ID</th>
+                                            <th>Route</th>
+                                            <th>Status</th>
+                                            <th>ETA</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($active_shipments as $shipment): ?>
+                                        <?php foreach ($active_shipments as $shipment): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($shipment['shipment_id']); ?></td>
                                             <td>
                                                 <small><?php echo htmlspecialchars($shipment['origin']); ?> → <?php echo htmlspecialchars($shipment['destination']); ?></small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $shipment['status'] == 'in_transit' ? 'primary' :
-                                                        ($shipment['status'] == 'out_for_delivery' ? 'info' : 'warning');
+                                                <span class="badge bg-<?php 
+                                                    echo $shipment['status'] == 'in_transit' ? 'primary' : 
+                                                        ($shipment['status'] == 'out_for_delivery' ? 'info' : 'warning'); 
                                                 ?>">
                                                     <?php echo ucwords(str_replace('_', ' ', $shipment['status'])); ?>
                                                 </span>
@@ -267,7 +267,7 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
                                                 <?php echo $shipment['planned_arrival'] ? date('M d', strtotime($shipment['planned_arrival'])) : 'TBD'; ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>

@@ -307,7 +307,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <small class="form-text text-muted">Select a warehouse manager to assign this warehouse. They will have access to manage this location.</small>
                     </div>
                 </div>
-
+                
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="latitude" class="form-label">Latitude <span class="text-danger">*</span></label>
@@ -324,10 +324,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Update Location</button>
             </form>
             <?php if (isset($created_at) || isset($updated_at)): ?>
-                <div class="mt-3 border-top pt-3 text-muted small">
-                    Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
-                    Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
-                </div>
+            <div class="mt-3 border-top pt-3 text-muted small">
+                Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
+                Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -336,25 +336,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php include '../includes/footer.php'; ?>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const typeSelect = document.getElementById('type');
-        const capacityGroup = document.getElementById('capacity_group');
-        const capacityKgInput = document.getElementById('capacity_kg');
-        const capacityM3Input = document.getElementById('capacity_m3');
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('type');
+    const capacityGroup = document.getElementById('capacity_group');
+    const capacityKgInput = document.getElementById('capacity_kg');
+    const capacityM3Input = document.getElementById('capacity_m3');
 
-        function toggleCapacityFields() {
-            if (typeSelect.value === 'warehouse') {
-                capacityGroup.style.display = 'block';
-                capacityKgInput.setAttribute('required', 'required');
-                capacityM3Input.setAttribute('required', 'required');
-            } else {
-                capacityGroup.style.display = 'none';
-                capacityKgInput.removeAttribute('required');
-                capacityM3Input.removeAttribute('required');
-            }
+    function toggleCapacityFields() {
+        if (typeSelect.value === 'warehouse') {
+            capacityGroup.style.display = 'block';
+            capacityKgInput.setAttribute('required', 'required');
+            capacityM3Input.setAttribute('required', 'required');
+        } else {
+            capacityGroup.style.display = 'none';
+            capacityKgInput.removeAttribute('required');
+            capacityM3Input.removeAttribute('required');
         }
+    }
 
-        toggleCapacityFields();
-        typeSelect.addEventListener('change', toggleCapacityFields);
-    });
+    toggleCapacityFields();
+    typeSelect.addEventListener('change', toggleCapacityFields);
+});
 </script>

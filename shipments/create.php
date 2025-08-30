@@ -21,6 +21,52 @@ $planned_departure = $planned_arrival = $total_weight_kg = $total_volume_m3 = $n
 
 $origin_location_id_err = $destination_location_id_err = $planned_departure_err = $planned_arrival_err = $driver_id_err = "";
 
+// Handle shipment request data if coming from request approval
+$request_data = null;
+if (isset($_GET['from_request']) && !empty($_GET['from_request'])) {
+    $request_id = (int)$_GET['from_request'];
+    
+    // Get request details
+    $sql_request = "SELECT sr.*, fp.production_code, fp.field_name, p.name as product_name,
+                           u.username as farm_manager_name, u.phone as farm_manager_phone
+                    FROM shipment_requests sr
+                    JOIN farm_production fp ON sr.production_id = fp.production_id
+                    JOIN products p ON sr.product_id = p.product_id
+                    JOIN users u ON sr.farm_manager_id = u.user_id
+                    WHERE sr.request_id = ? AND sr.status = 'pending'";
+    
+    if ($stmt = mysqli_prepare($conn, $sql_request)) {
+        mysqli_stmt_bind_param($stmt, "i", $request_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $request_data = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        
+        if ($request_data) {
+            // Pre-fill form with request data
+            $total_weight_kg = $request_data['quantity_kg'];
+            $total_volume_m3 = $request_data['quantity_kg'] * 0.001; // Rough estimate
+            $planned_departure = $request_data['preferred_pickup_date'] . ' 08:00:00';
+            $planned_arrival = date('Y-m-d H:i:s', strtotime($request_data['preferred_pickup_date'] . ' +2 days'));
+            $notes = "Created from shipment request: " . $request_data['request_code'] . "\n" . $request_data['notes'];
+            
+            // Get farm location (origin)
+            $sql_farm = "SELECT location_id FROM locations WHERE type = 'farm' LIMIT 1";
+            $farm_result = mysqli_query($conn, $sql_farm);
+            if ($farm_result && $farm = mysqli_fetch_assoc($farm_result)) {
+                $origin_location_id = $farm['location_id'];
+            }
+            
+            // Get warehouse location (destination)
+            $sql_warehouse = "SELECT location_id FROM locations WHERE type = 'warehouse' LIMIT 1";
+            $warehouse_result = mysqli_query($conn, $sql_warehouse);
+            if ($warehouse_result && $warehouse = mysqli_fetch_assoc($warehouse_result)) {
+                $destination_location_id = $warehouse['location_id'];
+            }
+        }
+    }
+}
+
 $locations_options = [];
 $sql_locations = "SELECT location_id, name, type FROM locations ORDER BY name ASC";
 if ($result_locations = mysqli_query($conn, $sql_locations)) {
@@ -158,7 +204,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         try {
             $shipment_code = generateShipmentId();
-            $sql_shipment = "INSERT INTO shipments (shipment_code, origin_location_id, destination_location_id, vehicle_id, driver_id, order_id, planned_departure, planned_arrival, total_weight_kg, total_volume_m3, notes, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            // Get request_id if creating from a request
+            $request_id = null;
+            if (isset($_GET['from_request']) && !empty($_GET['from_request'])) {
+                $request_id = (int)$_GET['from_request'];
+            }
+            
+            $sql_shipment = "INSERT INTO shipments (shipment_code, origin_location_id, destination_location_id, vehicle_id, driver_id, order_id, request_id, planned_departure, planned_arrival, total_weight_kg, total_volume_m3, notes, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             if ($stmt_shipment = mysqli_prepare($conn, $sql_shipment)) {
                 
                 // NEW: Use a dynamic array for binding parameters
@@ -169,6 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $vehicle_id,
                     $driver_id,
                     $order_id,
+                    $request_id,
                     $planned_departure,
                     $planned_arrival,
                     $total_weight_kg,
@@ -223,6 +277,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
             
+            // Update shipment request status if this was created from a request
+            if (isset($_GET['from_request']) && !empty($_GET['from_request'])) {
+                $request_id = (int)$_GET['from_request'];
+                $sql_update_request = "UPDATE shipment_requests SET status = 'approved' WHERE request_id = ?";
+                if ($stmt_update_request = mysqli_prepare($conn, $sql_update_request)) {
+                    mysqli_stmt_bind_param($stmt_update_request, "i", $request_id);
+                    if (!mysqli_stmt_execute($stmt_update_request)) {
+                        error_log("Error updating shipment request status: " . mysqli_error($conn));
+                    }
+                    mysqli_stmt_close($stmt_update_request);
+                } else {
+                    error_log("Error preparing shipment request status update: " . mysqli_error($conn));
+                }
+            }
+            
             mysqli_commit($conn);
             
             // Get order code if order_id exists
@@ -240,7 +309,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
             
-            $_SESSION['success_message'] = "Shipment created successfully for Order: " . $order_code . " with Shipment: " . $shipment_code;
+            // Set appropriate success message
+            if (isset($_GET['from_request']) && !empty($_GET['from_request'])) {
+                $_SESSION['success_message'] = "Shipment created successfully from request. Shipment Code: " . $shipment_code;
+            } else {
+                $_SESSION['success_message'] = "Shipment created successfully for Order: " . $order_code . " with Shipment: " . $shipment_code;
+            }
+            
             header("location: " . BASE_URL . "shipments/index.php");
             exit();
 
@@ -276,7 +351,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ?>
 
         <div class="card p-4 shadow-sm">
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <?php if ($request_data): ?>
+            <div class="alert alert-info mb-4">
+                <h6><i class="fas fa-truck-loading me-2"></i>Creating Shipment from Request</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Request Code:</strong> <?php echo htmlspecialchars($request_data['request_code']); ?><br>
+                        <strong>Product:</strong> <?php echo htmlspecialchars($request_data['product_name']); ?><br>
+                        <strong>Quantity:</strong> <?php echo number_format($request_data['quantity_kg'], 2); ?> kg
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Farm Manager:</strong> <?php echo htmlspecialchars($request_data['farm_manager_name']); ?><br>
+                        <strong>Production:</strong> <?php echo htmlspecialchars($request_data['production_code']); ?><br>
+                        <strong>Field:</strong> <?php echo htmlspecialchars($request_data['field_name']); ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?><?php echo (isset($_GET['from_request'])) ? '?from_request=' . htmlspecialchars($_GET['from_request']) : ''; ?>" method="post">
                 <div class="mb-3">
                     <label for="order_id" class="form-label">Link to Order (Optional)</label>
                     <select name="order_id" id="order_id" class="form-select">

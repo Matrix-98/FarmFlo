@@ -175,7 +175,15 @@ include '../includes/head.php';
         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h2><?php echo ($user_role == 'customer') ? 'My Shipments' : (($user_role == 'driver') ? 'My Assigned Shipments' : 'Shipment Management'); ?></h2>
             <?php if (in_array($user_role, ['admin', 'logistics_manager'])): ?>
-            <a href="<?php echo BASE_URL; ?>shipments/create.php" class="btn btn-success"><i class="fas fa-plus"></i> Create Shipment</a>
+            <div class="d-flex gap-2">
+                <a href="<?php echo BASE_URL; ?>shipments/requested.php" class="btn btn-warning">
+                    <i class="fas fa-truck-loading"></i> Requested Shipments
+                    <?php if (hasPendingShipmentRequests()): ?>
+                        <span class="badge bg-danger ms-1">!</span>
+                    <?php endif; ?>
+                </a>
+                <a href="<?php echo BASE_URL; ?>shipments/create.php" class="btn btn-success"><i class="fas fa-plus"></i> Create Shipment</a>
+            </div>
             <?php endif; ?>
         </div>
 

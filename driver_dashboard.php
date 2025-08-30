@@ -65,7 +65,17 @@ if ($stmt = mysqli_prepare($conn, $sql_shipments)) {
     mysqli_stmt_bind_param($stmt, "i", $user_id);
     if (mysqli_stmt_execute($stmt)) {
         $result = mysqli_stmt_get_result($stmt);
-        $shipment_stats = mysqli_fetch_assoc($result);
+        $db_stats = mysqli_fetch_assoc($result);
+        if ($db_stats) {
+            // Ensure all values are properly set, converting NULL to 0
+            $shipment_stats['total_shipments'] = $db_stats['total_shipments'] ?? 0;
+            $shipment_stats['pending_shipments'] = $db_stats['pending_shipments'] ?? 0;
+            $shipment_stats['assigned_shipments'] = $db_stats['assigned_shipments'] ?? 0;
+            $shipment_stats['in_transit_shipments'] = $db_stats['in_transit_shipments'] ?? 0;
+            $shipment_stats['out_for_delivery_shipments'] = $db_stats['out_for_delivery_shipments'] ?? 0;
+            $shipment_stats['delivered_shipments'] = $db_stats['delivered_shipments'] ?? 0;
+            $shipment_stats['failed_shipments'] = $db_stats['failed_shipments'] ?? 0;
+        }
     }
     mysqli_stmt_close($stmt);
 }
@@ -96,13 +106,13 @@ if ($stmt = mysqli_prepare($conn, $sql_active)) {
 
 // Get recent deliveries
 $sql_recent = "SELECT s.shipment_id, s.shipment_code, s.order_id, s.status, s.actual_arrival,
-                      ol.name as origin, dl.name as destination
+                      ol.name as origin, dl.name as destination, s.updated_at
                FROM shipments s
                JOIN locations ol ON s.origin_location_id = ol.location_id
                JOIN locations dl ON s.destination_location_id = dl.location_id
                WHERE s.driver_id = (SELECT driver_id FROM drivers WHERE user_id = ?)
                AND s.status IN ('delivered', 'failed')
-               ORDER BY s.actual_arrival DESC, s.updated_at DESC
+               ORDER BY s.updated_at DESC
                LIMIT 5";
 
 $recent_deliveries = [];
@@ -120,17 +130,16 @@ if ($stmt = mysqli_prepare($conn, $sql_recent)) {
 // Get recent activity (tracking updates, status changes)
 $sql_activity = "SELECT 
     'tracking' as activity_type,
-    t.tracking_id,
-    t.shipment_id,
-    t.location_name,
-    t.status,
-    t.notes,
-    t.created_at,
+    e.event_id as tracking_id,
+    e.shipment_id,
+    e.event_type as status,
+    e.notes,
+    e.event_date as created_at,
     s.shipment_code
-FROM shipment_tracking t
-JOIN shipments s ON t.shipment_id = s.shipment_id
+FROM supply_chain_events e
+JOIN shipments s ON e.shipment_id = s.shipment_id
 WHERE s.driver_id = (SELECT driver_id FROM drivers WHERE user_id = ?)
-ORDER BY t.created_at DESC
+ORDER BY e.event_date DESC
 LIMIT 10";
 
 $recent_activity = [];
@@ -179,7 +188,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-truck fa-2x text-primary mb-2"></i>
-                        <h4><?php echo $shipment_stats['total_shipments']; ?></h4>
+                        <h4><?php echo intval($shipment_stats['total_shipments']); ?></h4>
                         <p class="text-muted mb-0">Total Shipments</p>
                     </div>
                 </div>
@@ -188,7 +197,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-route fa-2x text-warning mb-2"></i>
-                        <h4><?php echo $shipment_stats['in_transit_shipments'] + $shipment_stats['out_for_delivery_shipments']; ?></h4>
+                        <h4><?php echo intval($shipment_stats['in_transit_shipments']) + intval($shipment_stats['out_for_delivery_shipments']); ?></h4>
                         <p class="text-muted mb-0">Active Deliveries</p>
                     </div>
                 </div>
@@ -197,7 +206,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                        <h4><?php echo $shipment_stats['delivered_shipments']; ?></h4>
+                        <h4><?php echo intval($shipment_stats['delivered_shipments']); ?></h4>
                         <p class="text-muted mb-0">Completed Deliveries</p>
                     </div>
                 </div>
@@ -206,7 +215,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-clock fa-2x text-info mb-2"></i>
-                        <h4><?php echo $shipment_stats['pending_shipments'] + $shipment_stats['assigned_shipments']; ?></h4>
+                        <h4><?php echo intval($shipment_stats['pending_shipments']) + intval($shipment_stats['assigned_shipments']); ?></h4>
                         <p class="text-muted mb-0">Pending Shipments</p>
                     </div>
                 </div>
@@ -247,26 +256,26 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
         <div class="row">
             <!-- Active Shipments -->
             <div class="col-md-6 mb-4">
-                <div class="card">
+                <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-route me-2"></i>Active Shipments</h5>
                         <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <?php if (!empty($active_shipments)): ?>
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Shipment ID</th>
-                                        <th>Route</th>
-                                        <th>Status</th>
-                                        <th>Cargo</th>
-                                        <th>ETA</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Shipment ID</th>
+                                            <th>Route</th>
+                                            <th>Status</th>
+                                            <th>Cargo</th>
+                                            <th>ETA</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($active_shipments as $shipment): ?>
+                                        <?php foreach ($active_shipments as $shipment): ?>
                                         <tr>
                                             <td>
                                                 <a href="<?php echo BASE_URL; ?>shipments/view.php?id=<?php echo $shipment['shipment_id']; ?>" class="text-decoration-none">
@@ -277,9 +286,9 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                                                 <small><?php echo htmlspecialchars($shipment['origin']); ?> → <?php echo htmlspecialchars($shipment['destination']); ?></small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $shipment['status'] == 'in_transit' ? 'primary' :
-                                                    ($shipment['status'] == 'out_for_delivery' ? 'info' : 'warning');
+                                                <span class="badge bg-<?php 
+                                                    echo $shipment['status'] == 'in_transit' ? 'primary' : 
+                                                        ($shipment['status'] == 'out_for_delivery' ? 'info' : 'warning'); 
                                                 ?>">
                                                     <?php echo ucwords(str_replace('_', ' ', $shipment['status'])); ?>
                                                 </span>
@@ -291,7 +300,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                                                 <?php echo $shipment['planned_arrival'] ? date('M d', strtotime($shipment['planned_arrival'])) : 'TBD'; ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -304,25 +313,25 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
 
             <!-- Recent Deliveries -->
             <div class="col-md-6 mb-4">
-                <div class="card">
+                <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Deliveries</h5>
-                        <a href="<?php echo BASE_URL; ?>shipments/" class="btn btn-sm btn-outline-primary">View All</a>
+                        <a href="<?php echo BASE_URL . "shipments/"; ?>" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <?php if (!empty($recent_deliveries)): ?>
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Shipment ID</th>
-                                        <th>Route</th>
-                                        <th>Status</th>
-                                        <th>Completed</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Shipment ID</th>
+                                            <th>Route</th>
+                                            <th>Status</th>
+                                            <th>Completed</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($recent_deliveries as $delivery): ?>
+                                        <?php foreach ($recent_deliveries as $delivery): ?>
                                         <tr>
                                             <td>
                                                 <a href="<?php echo BASE_URL; ?>shipments/view.php?id=<?php echo $delivery['shipment_id']; ?>" class="text-decoration-none">
@@ -338,10 +347,10 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                                                 </span>
                                             </td>
                                             <td>
-                                                <?php echo $delivery['actual_arrival'] ? date('M d, H:i', strtotime($delivery['actual_arrival'])) : date('M d', strtotime($delivery['actual_arrival'])); ?>
+                                                <?php echo $delivery['actual_arrival'] ? date('M d, H:i', strtotime($delivery['actual_arrival'])) : date('M d, H:i', strtotime($delivery['updated_at'])); ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -366,17 +375,17 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Shipment</th>
-                                        <th>Activity</th>
-                                        <th>Location</th>
-                                        <th>Status</th>
-                                        <th>Notes</th>
-                                        <th>Time</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Shipment</th>
+                                            <th>Activity</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Notes</th>
+                                            <th>Time</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($recent_activity as $activity): ?>
+                                        <?php foreach ($recent_activity as $activity): ?>
                                         <tr>
                                             <td>
                                                 <a href="<?php echo BASE_URL; ?>shipments/view.php?id=<?php echo $activity['shipment_id']; ?>" class="text-decoration-none">
@@ -391,10 +400,10 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                                                 <small><?php echo htmlspecialchars($activity['location_name']); ?></small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $activity['status'] == 'in_transit' ? 'primary' :
-                                                    ($activity['status'] == 'out_for_delivery' ? 'info' :
-                                                        ($activity['status'] == 'delivered' ? 'success' : 'warning'));
+                                                <span class="badge bg-<?php 
+                                                    echo $activity['status'] == 'in_transit' ? 'primary' : 
+                                                        ($activity['status'] == 'out_for_delivery' ? 'info' : 
+                                                        ($activity['status'] == 'delivered' ? 'success' : 'warning')); 
                                                 ?>">
                                                     <?php echo ucwords(str_replace('_', ' ', $activity['status'])); ?>
                                                 </span>
@@ -410,7 +419,7 @@ if ($stmt = mysqli_prepare($conn, $sql_activity)) {
                                                 </small>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>

@@ -68,7 +68,7 @@ $recent_movements = [];
 // If warehouses are assigned, get the data
 if (!empty($assigned_locations)) {
     $location_ids = implode(',', $assigned_locations);
-
+    
     // Get inventory statistics for assigned warehouses only
     $sql_inventory_stats = "SELECT 
         COUNT(*) as total_items,
@@ -154,16 +154,16 @@ include 'includes/head.php';
         </div>
 
         <?php if (empty($assigned_locations)): ?>
-            <!-- No Assigned Warehouses Alert -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle me-2"></i>No Warehouses Assigned</h5>
-                        <p class="mb-2">You don't have any warehouses assigned to you yet. Please contact an administrator to assign warehouses to your account.</p>
-                        <p class="mb-0"><strong>Current Status:</strong> You cannot access inventory management until warehouses are assigned to your account.</p>
-                    </div>
+        <!-- No Assigned Warehouses Alert -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>No Warehouses Assigned</h5>
+                    <p class="mb-2">You don't have any warehouses assigned to you yet. Please contact an administrator to assign warehouses to your account.</p>
+                    <p class="mb-0"><strong>Current Status:</strong> You cannot access inventory management until warehouses are assigned to your account.</p>
                 </div>
             </div>
+        </div>
         <?php endif; ?>
 
         <!-- Quick Stats -->
@@ -244,21 +244,21 @@ include 'includes/head.php';
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Location</th>
-                                        <th>Quantity</th>
-                                        <th>Expires</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Location</th>
+                                            <th>Quantity</th>
+                                            <th>Expires</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($expiring_inventory as $item): ?>
+                                        <?php foreach ($expiring_inventory as $item): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                                             <td><?php echo htmlspecialchars($item['location_name']); ?></td>
                                             <td><?php echo number_format($item['quantity_kg'], 1); ?> kg</td>
                                             <td>
-                                                <?php
+                                                <?php 
                                                 $days_until = (strtotime($item['expiry_date']) - time()) / (60 * 60 * 24);
                                                 $badge_class = $days_until <= 2 ? 'danger' : ($days_until <= 5 ? 'warning' : 'info');
                                                 ?>
@@ -268,7 +268,7 @@ include 'includes/head.php';
                                                 </span>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -290,40 +290,40 @@ include 'includes/head.php';
                     </div>
                     <div class="card-body">
                         <?php if (!empty($recent_movements)): ?>
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Product</th>
-                                    <th>Location</th>
-                                    <th>Quantity</th>
-                                    <th>Stage</th>
-                                    <th>Created By</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php foreach ($recent_movements as $movement): ?>
-                                    <tr>
-                                        <td><?php echo date('M d, H:i', strtotime($movement['created_at'])); ?></td>
-                                        <td><?php echo htmlspecialchars($movement['product_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($movement['location_name']); ?></td>
-                                        <td><?php echo number_format($movement['quantity_kg'], 1); ?> kg</td>
-                                        <td>
-                                                <span class="badge bg-<?php
-                                                echo $movement['stage'] == 'available' ? 'success' :
-                                                    ($movement['stage'] == 'reserved' ? 'warning' :
-                                                        ($movement['stage'] == 'in-transit' ? 'info' : 'danger'));
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Product</th>
+                                            <th>Location</th>
+                                            <th>Quantity</th>
+                                            <th>Stage</th>
+                                            <th>Created By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($recent_movements as $movement): ?>
+                                        <tr>
+                                            <td><?php echo date('M d, H:i', strtotime($movement['created_at'])); ?></td>
+                                            <td><?php echo htmlspecialchars($movement['product_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($movement['location_name']); ?></td>
+                                            <td><?php echo number_format($movement['quantity_kg'], 1); ?> kg</td>
+                                            <td>
+                                                <span class="badge bg-<?php 
+                                                    echo $movement['stage'] == 'available' ? 'success' : 
+                                                        ($movement['stage'] == 'reserved' ? 'warning' : 
+                                                        ($movement['stage'] == 'in-transit' ? 'info' : 'danger')); 
                                                 ?>">
                                                     <?php echo ucfirst($movement['stage']); ?>
                                                 </span>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($movement['created_by']); ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($movement['created_by']); ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         <?php else: ?>
                             <p class="text-muted text-center mb-0">No recent inventory movements.</p>
                         <?php endif; ?>

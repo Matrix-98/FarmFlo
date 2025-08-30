@@ -274,4 +274,15 @@ function hasPendingRegistrationRequests() {
     
     return false;
 }
+
+function hasPendingShipmentRequests() {
+    global $conn;
+    $sql = "SELECT COUNT(*) as count FROM shipment_requests WHERE status = 'pending'";
+    $result = mysqli_query($conn, $sql);
+    if ($result) {
+        $row = mysqli_fetch_assoc($result);
+        return $row['count'] > 0;
+    }
+    return false;
+}
 ?>

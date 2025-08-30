@@ -243,31 +243,31 @@ if ($result = mysqli_query($conn, $sql_inventory)) {
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Field</th>
-                                        <th>Crop</th>
-                                        <th>Status</th>
-                                        <th>Progress</th>
-                                        <th>ETA</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Crop</th>
+                                            <th>Status</th>
+                                            <th>Progress</th>
+                                            <th>ETA</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($active_productions as $production): ?>
+                                        <?php foreach ($active_productions as $production): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($production['field_name']); ?></td>
                                             <td>
                                                 <small><?php echo htmlspecialchars($production['product_name']); ?></small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-<?php
-                                                echo $production['status'] == 'growing' ? 'success' :
-                                                    ($production['status'] == 'harvesting' ? 'warning' : 'info');
+                                                <span class="badge bg-<?php 
+                                                    echo $production['status'] == 'growing' ? 'success' : 
+                                                        ($production['status'] == 'harvesting' ? 'warning' : 'info'); 
                                                 ?>">
                                                     <?php echo ucfirst($production['status']); ?>
                                                 </span>
                                             </td>
                                             <td>
-                                                <?php
+                                                <?php 
                                                 $progress = 0;
                                                 if ($production['harvested_amount_kg'] > 0 && $production['seed_amount_kg'] > 0) {
                                                     $progress = min(100, ($production['harvested_amount_kg'] / $production['seed_amount_kg']) * 100);
@@ -283,7 +283,7 @@ if ($result = mysqli_query($conn, $sql_inventory)) {
                                                 <?php echo $production['expected_harvest_date'] ? date('M d', strtotime($production['expected_harvest_date'])) : 'TBD'; ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -306,15 +306,15 @@ if ($result = mysqli_query($conn, $sql_inventory)) {
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
-                                    <tr>
-                                        <th>Field</th>
-                                        <th>Crop</th>
-                                        <th>Harvested</th>
-                                        <th>Date</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Crop</th>
+                                            <th>Harvested</th>
+                                            <th>Date</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach ($recent_harvests as $harvest): ?>
+                                        <?php foreach ($recent_harvests as $harvest): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($harvest['field_name']); ?></td>
                                             <td>
@@ -329,7 +329,7 @@ if ($result = mysqli_query($conn, $sql_inventory)) {
                                                 <?php echo $harvest['actual_harvest_date'] ? date('M d, Y', strtotime($harvest['actual_harvest_date'])) : 'N/A'; ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>

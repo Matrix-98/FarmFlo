@@ -28,7 +28,7 @@ if ($production_id <= 0) {
 
 // Get farm production details
 $production = null;
-$sql = "SELECT fp.*, p.name as product_name, p.item_type as crop_type, p.description as product_description,
+    $sql = "SELECT fp.*, p.name as product_name, p.item_type as crop_type, p.description as product_description,
                u.username as farm_manager_name, u.email as farm_manager_email, u.phone as farm_manager_phone
         FROM farm_production fp
         JOIN products p ON fp.product_id = p.product_id
@@ -48,7 +48,7 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     }
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-
+    
     if ($result && mysqli_num_rows($result) > 0) {
         $production = mysqli_fetch_assoc($result);
     } else {
@@ -85,10 +85,15 @@ include '../includes/head.php';
                 <a href="edit.php?id=<?php echo $production_id; ?>" class="btn btn-warning me-2">
                     <i class="fas fa-edit me-1"></i>Edit
                 </a>
-                <a href="delete.php?id=<?php echo $production_id; ?>" class="btn btn-danger"
+                <a href="delete.php?id=<?php echo $production_id; ?>" class="btn btn-danger" 
                    onclick="return confirm('Are you sure you want to delete this production record?');">
                     <i class="fas fa-trash me-1"></i>Delete
                 </a>
+                <?php if (($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'farm_manager') && $production['status'] == 'harvested' && $production['harvested_amount_kg'] > 0): ?>
+                <button type="button" class="btn btn-success" onclick="openShipmentRequestModal()">
+                    <i class="fas fa-truck me-1"></i>Request for Shipment
+                </button>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -198,12 +203,12 @@ include '../includes/head.php';
                         </div>
 
                         <?php if ($production['notes']): ?>
-                            <div class="mt-4">
-                                <h6><i class="fas fa-sticky-note me-2"></i>Notes</h6>
-                                <div class="alert alert-light">
-                                    <?php echo nl2br(htmlspecialchars($production['notes'])); ?>
-                                </div>
+                        <div class="mt-4">
+                            <h6><i class="fas fa-sticky-note me-2"></i>Notes</h6>
+                            <div class="alert alert-light">
+                                <?php echo nl2br(htmlspecialchars($production['notes'])); ?>
                             </div>
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -222,10 +227,10 @@ include '../includes/head.php';
                             <?php echo htmlspecialchars($production['farm_manager_email']); ?>
                         </p>
                         <?php if ($production['farm_manager_phone']): ?>
-                            <p class="text-muted mb-0">
-                                <i class="fas fa-phone me-1"></i>
-                                <?php echo htmlspecialchars($production['farm_manager_phone']); ?>
-                            </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-phone me-1"></i>
+                            <?php echo htmlspecialchars($production['farm_manager_phone']); ?>
+                        </p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -241,10 +246,10 @@ include '../includes/head.php';
                             <strong>Type:</strong> <?php echo htmlspecialchars($production['crop_type']); ?>
                         </p>
                         <?php if ($production['product_description']): ?>
-                            <p class="text-muted mb-0">
-                                <?php echo htmlspecialchars(substr($production['product_description'], 0, 100)); ?>
-                                <?php if (strlen($production['product_description']) > 100): ?>...<?php endif; ?>
-                            </p>
+                        <p class="text-muted mb-0">
+                            <?php echo htmlspecialchars(substr($production['product_description'], 0, 100)); ?>
+                            <?php if (strlen($production['product_description']) > 100): ?>...<?php endif; ?>
+                        </p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -267,7 +272,7 @@ include '../includes/head.php';
                                     <p class="text-muted"><?php echo date('F d, Y g:i A', strtotime($production['created_at'])); ?></p>
                                 </div>
                             </div>
-
+                            
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-success"></div>
                                 <div class="timeline-content">
@@ -275,35 +280,35 @@ include '../includes/head.php';
                                     <p class="text-muted"><?php echo date('F d, Y', strtotime($production['sowing_date'])); ?></p>
                                 </div>
                             </div>
-
+                            
                             <?php if ($production['expected_harvest_date']): ?>
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-warning"></div>
-                                    <div class="timeline-content">
-                                        <h6>Expected Harvest</h6>
-                                        <p class="text-muted"><?php echo date('F d, Y', strtotime($production['expected_harvest_date'])); ?></p>
-                                    </div>
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-warning"></div>
+                                <div class="timeline-content">
+                                    <h6>Expected Harvest</h6>
+                                    <p class="text-muted"><?php echo date('F d, Y', strtotime($production['expected_harvest_date'])); ?></p>
                                 </div>
+                            </div>
                             <?php endif; ?>
-
+                            
                             <?php if ($production['actual_harvest_date']): ?>
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-info"></div>
-                                    <div class="timeline-content">
-                                        <h6>Actual Harvest</h6>
-                                        <p class="text-muted"><?php echo date('F d, Y', strtotime($production['actual_harvest_date'])); ?></p>
-                                    </div>
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <h6>Actual Harvest</h6>
+                                    <p class="text-muted"><?php echo date('F d, Y', strtotime($production['actual_harvest_date'])); ?></p>
                                 </div>
+                            </div>
                             <?php endif; ?>
-
+                            
                             <?php if ($production['updated_at'] != $production['created_at']): ?>
-                                <div class="timeline-item">
-                                    <div class="timeline-marker bg-secondary"></div>
-                                    <div class="timeline-content">
-                                        <h6>Last Updated</h6>
-                                        <p class="text-muted"><?php echo date('F d, Y g:i A', strtotime($production['updated_at'])); ?></p>
-                                    </div>
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-secondary"></div>
+                                <div class="timeline-content">
+                                    <h6>Last Updated</h6>
+                                    <p class="text-muted"><?php echo date('F d, Y g:i A', strtotime($production['updated_at'])); ?></p>
                                 </div>
+                            </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -313,54 +318,164 @@ include '../includes/head.php';
     </div>
 </div>
 
+<!-- Shipment Request Modal -->
+<div class="modal fade" id="shipmentRequestModal" tabindex="-1" aria-labelledby="shipmentRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shipmentRequestModalLabel">
+                    <i class="fas fa-truck me-2"></i>Request for Shipment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="shipmentRequestForm" method="POST" action="request_shipment.php">
+                <div class="modal-body">
+                    <input type="hidden" name="production_id" value="<?php echo $production_id; ?>">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="product_name" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="product_name" value="<?php echo htmlspecialchars($production['product_name']); ?>" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="production_code" class="form-label">Production Code</label>
+                                <input type="text" class="form-control" id="production_code" value="<?php echo htmlspecialchars($production['production_code']); ?>" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantity_kg" class="form-label">Quantity Available (kg)</label>
+                                <input type="number" class="form-control" id="quantity_kg" name="quantity_kg" 
+                                       value="<?php echo $production['harvested_amount_kg']; ?>" 
+                                       max="<?php echo $production['harvested_amount_kg']; ?>" 
+                                       step="0.01" required>
+                                <div class="form-text">Maximum available: <?php echo number_format($production['harvested_amount_kg'], 2); ?> kg</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="preferred_pickup_date" class="form-label">Preferred Pickup Date</label>
+                                <input type="date" class="form-control" id="preferred_pickup_date" name="preferred_pickup_date" 
+                                       min="<?php echo date('Y-m-d'); ?>" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Any special instructions or notes for pickup..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> This request will be reviewed by logistics management. 
+                        Once approved, it will be converted to a shipment order.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i>Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openShipmentRequestModal() {
+    // Set default pickup date to tomorrow
+    document.getElementById('preferred_pickup_date').value = '<?php echo date('Y-m-d', strtotime('+1 day')); ?>';
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('shipmentRequestModal'));
+    modal.show();
+}
+
+// Form validation
+document.getElementById('shipmentRequestForm').addEventListener('submit', function(e) {
+    const quantity = parseFloat(document.getElementById('quantity_kg').value);
+    const maxQuantity = parseFloat(<?php echo $production['harvested_amount_kg']; ?>);
+    
+    if (quantity <= 0) {
+        e.preventDefault();
+        alert('Quantity must be greater than 0.');
+        return false;
+    }
+    
+    if (quantity > maxQuantity) {
+        e.preventDefault();
+        alert('Quantity cannot exceed the available harvested amount.');
+        return false;
+    }
+    
+    const pickupDate = document.getElementById('preferred_pickup_date').value;
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (pickupDate < today) {
+        e.preventDefault();
+        alert('Pickup date cannot be in the past.');
+        return false;
+    }
+});
+</script>
+
 <style>
-    .timeline {
-        position: relative;
-        padding-left: 30px;
-    }
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
 
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 15px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #e9ecef;
-    }
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
 
-    .timeline-item {
-        position: relative;
-        margin-bottom: 30px;
-    }
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
 
-    .timeline-marker {
-        position: absolute;
-        left: -22px;
-        top: 5px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 2px #e9ecef;
-    }
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
 
-    .timeline-content {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-left: 10px;
-    }
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-left: 10px;
+}
 
-    .timeline-content h6 {
-        margin: 0 0 5px 0;
-        color: #495057;
-    }
+.timeline-content h6 {
+    margin: 0 0 5px 0;
+    color: #495057;
+}
 
-    .timeline-content p {
-        margin: 0;
-        font-size: 0.9rem;
-    }
+.timeline-content p {
+    margin: 0;
+    font-size: 0.9rem;
+}
 </style>
 
 <?php include '../includes/footer.php'; ?>

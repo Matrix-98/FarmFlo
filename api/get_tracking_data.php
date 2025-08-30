@@ -28,7 +28,7 @@ $access_param_types = "";
 if ($user_role == 'customer') {
     // Customer can only see their own shipments
     $access_sql = "SELECT 1 FROM shipments s 
-                   JOIN orders o ON s.order_id = o.order_id 
+                   LEFT JOIN orders o ON s.order_id = o.order_id 
                    WHERE s.shipment_id = ? AND o.customer_id = ?";
     $access_params = [$shipment_id, $user_id];
     $access_param_types = "ii";

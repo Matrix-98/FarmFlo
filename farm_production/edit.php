@@ -49,10 +49,10 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
     }
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-
+    
     if ($result && mysqli_num_rows($result) > 0) {
         $production = mysqli_fetch_assoc($result);
-
+        
         // Populate form fields with existing data
         $farm_manager_id = $production['farm_manager_id'];
         $product_id = $production['product_id'];
@@ -78,21 +78,21 @@ if ($stmt = mysqli_prepare($conn, $sql)) {
 
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
+    
     // Validate Farm Manager
     if (empty(trim($_POST["farm_manager_id"]))) {
         $farm_manager_id_err = "Please select a farm manager.";
     } else {
         $farm_manager_id = trim($_POST["farm_manager_id"]);
     }
-
+    
     // Validate Product
     if (empty(trim($_POST["product_id"]))) {
         $product_id_err = "Please select a product.";
     } else {
         $product_id = trim($_POST["product_id"]);
     }
-
+    
     // Validate Seed Amount
     if (empty(trim($_POST["seed_amount_kg"]))) {
         $seed_amount_kg_err = "Please enter seed amount.";
@@ -101,21 +101,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $seed_amount_kg = trim($_POST["seed_amount_kg"]);
     }
-
+    
     // Validate Sowing Date
     if (empty(trim($_POST["sowing_date"]))) {
         $sowing_date_err = "Please enter sowing date.";
     } else {
         $sowing_date = trim($_POST["sowing_date"]);
     }
-
+    
     // Validate Field Name
     if (empty(trim($_POST["field_name"]))) {
         $field_name_err = "Please enter field name.";
     } else {
         $field_name = trim($_POST["field_name"]);
     }
-
+    
     // Validate Expected Harvest Date (optional)
     if (!empty(trim($_POST["expected_harvest_date"]))) {
         $expected_harvest_date = trim($_POST["expected_harvest_date"]);
@@ -125,7 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $expected_harvest_date = null;
     }
-
+    
     // Validate Actual Harvest Date (optional)
     if (!empty(trim($_POST["actual_harvest_date"]))) {
         $actual_harvest_date = trim($_POST["actual_harvest_date"]);
@@ -135,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $actual_harvest_date = null;
     }
-
+    
     // Validate Harvested Amount (optional)
     if (!empty(trim($_POST["harvested_amount_kg"]))) {
         if (!is_numeric($_POST["harvested_amount_kg"]) || $_POST["harvested_amount_kg"] < 0) {
@@ -146,7 +146,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $harvested_amount_kg = null;
     }
-
+    
     // Validate Status
     $allowed_statuses = ['planted', 'growing', 'ready_for_harvest', 'harvested', 'completed'];
     if (empty(trim($_POST["status"])) || !in_array(trim($_POST["status"]), $allowed_statuses)) {
@@ -154,27 +154,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $status = trim($_POST["status"]);
     }
-
+    
     // Validate Notes (optional)
     $notes = trim($_POST["notes"]);
-
+    
     // If no errors, update the record
-    if (empty($farm_manager_id_err) && empty($product_id_err) && empty($seed_amount_kg_err) &&
-            empty($sowing_date_err) && empty($field_name_err) && empty($expected_harvest_date_err) &&
-            empty($actual_harvest_date_err) && empty($harvested_amount_kg_err) && empty($status_err)) {
-
+    if (empty($farm_manager_id_err) && empty($product_id_err) && empty($seed_amount_kg_err) && 
+        empty($sowing_date_err) && empty($field_name_err) && empty($expected_harvest_date_err) && 
+        empty($actual_harvest_date_err) && empty($harvested_amount_kg_err) && empty($status_err)) {
+        
         $sql = "UPDATE farm_production SET 
                 farm_manager_id = ?, product_id = ?, seed_amount_kg = ?, sowing_date = ?, 
                 field_name = ?, expected_harvest_date = ?, actual_harvest_date = ?, 
                 harvested_amount_kg = ?, status = ?, notes = ?, updated_by = ?
                 WHERE production_id = ?";
-
+        
         if ($stmt = mysqli_prepare($conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "iidssssdssii",
-                    $farm_manager_id, $product_id, $seed_amount_kg, $sowing_date,
-                    $field_name, $expected_harvest_date, $actual_harvest_date,
-                    $harvested_amount_kg, $status, $notes, $_SESSION['user_id'], $production_id);
-
+            mysqli_stmt_bind_param($stmt, "iidssssdssii", 
+                $farm_manager_id, $product_id, $seed_amount_kg, $sowing_date, 
+                $field_name, $expected_harvest_date, $actual_harvest_date, 
+                $harvested_amount_kg, $status, $notes, $_SESSION['user_id'], $production_id);
+            
             if (mysqli_stmt_execute($stmt)) {
                 $_SESSION['success_message'] = "Farm production record updated successfully.";
                 header("location: " . BASE_URL . "farm_production/view.php?id=" . $production_id);
@@ -201,7 +201,7 @@ if ($result_farm_managers) {
 
 // Get products for dropdown
 $products = [];
-$sql_products = "SELECT product_id, name as product_name, item_type as crop_type FROM products ORDER BY name";
+    $sql_products = "SELECT product_id, name as product_name, item_type as crop_type FROM products ORDER BY name";
 $result_products = mysqli_query($conn, $sql_products);
 if ($result_products) {
     while ($row = mysqli_fetch_assoc($result_products)) {
@@ -254,22 +254,22 @@ include '../includes/head.php';
                     <div class="row">
                         <div class="col-md-6">
                             <?php if ($_SESSION['role'] != 'farm_manager'): ?>
-                                <div class="mb-3">
-                                    <label for="farm_manager_id" class="form-label">Farm Manager <span class="text-danger">*</span></label>
-                                    <select name="farm_manager_id" id="farm_manager_id" class="form-select <?php echo (!empty($farm_manager_id_err)) ? 'is-invalid' : ''; ?>">
-                                        <option value="">Select Farm Manager</option>
-                                        <?php foreach ($farm_managers as $manager): ?>
-                                            <option value="<?php echo $manager['user_id']; ?>"
-                                                    <?php echo ($farm_manager_id == $manager['user_id']) ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($manager['username']); ?>
-                                                (<?php echo htmlspecialchars($manager['email']); ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="invalid-feedback"><?php echo $farm_manager_id_err; ?></div>
-                                </div>
+                            <div class="mb-3">
+                                <label for="farm_manager_id" class="form-label">Farm Manager <span class="text-danger">*</span></label>
+                                <select name="farm_manager_id" id="farm_manager_id" class="form-select <?php echo (!empty($farm_manager_id_err)) ? 'is-invalid' : ''; ?>">
+                                    <option value="">Select Farm Manager</option>
+                                    <?php foreach ($farm_managers as $manager): ?>
+                                        <option value="<?php echo $manager['user_id']; ?>" 
+                                                <?php echo ($farm_manager_id == $manager['user_id']) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($manager['username']); ?> 
+                                            (<?php echo htmlspecialchars($manager['email']); ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="invalid-feedback"><?php echo $farm_manager_id_err; ?></div>
+                            </div>
                             <?php else: ?>
-                                <input type="hidden" name="farm_manager_id" value="<?php echo $_SESSION['user_id']; ?>">
+                            <input type="hidden" name="farm_manager_id" value="<?php echo $_SESSION['user_id']; ?>">
                             <?php endif; ?>
 
                             <div class="mb-3">
@@ -277,9 +277,9 @@ include '../includes/head.php';
                                 <select name="product_id" id="product_id" class="form-select <?php echo (!empty($product_id_err)) ? 'is-invalid' : ''; ?>">
                                     <option value="">Select Product</option>
                                     <?php foreach ($products as $product): ?>
-                                        <option value="<?php echo $product['product_id']; ?>"
+                                        <option value="<?php echo $product['product_id']; ?>" 
                                                 <?php echo ($product_id == $product['product_id']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($product['product_name']); ?>
+                                            <?php echo htmlspecialchars($product['product_name']); ?> 
                                             (<?php echo htmlspecialchars($product['crop_type']); ?>)
                                         </option>
                                     <?php endforeach; ?>
@@ -289,24 +289,24 @@ include '../includes/head.php';
 
                             <div class="mb-3">
                                 <label for="seed_amount_kg" class="form-label">Seed Amount (kg) <span class="text-danger">*</span></label>
-                                <input type="number" name="seed_amount_kg" id="seed_amount_kg" step="0.01" min="0.01"
-                                       class="form-control <?php echo (!empty($seed_amount_kg_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="number" name="seed_amount_kg" id="seed_amount_kg" step="0.01" min="0.01" 
+                                       class="form-control <?php echo (!empty($seed_amount_kg_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo $seed_amount_kg; ?>">
                                 <div class="invalid-feedback"><?php echo $seed_amount_kg_err; ?></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="sowing_date" class="form-label">Sowing Date <span class="text-danger">*</span></label>
-                                <input type="date" name="sowing_date" id="sowing_date"
-                                       class="form-control <?php echo (!empty($sowing_date_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="date" name="sowing_date" id="sowing_date" 
+                                       class="form-control <?php echo (!empty($sowing_date_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo $sowing_date; ?>">
                                 <div class="invalid-feedback"><?php echo $sowing_date_err; ?></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="field_name" class="form-label">Field Name <span class="text-danger">*</span></label>
-                                <input type="text" name="field_name" id="field_name"
-                                       class="form-control <?php echo (!empty($field_name_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="text" name="field_name" id="field_name" 
+                                       class="form-control <?php echo (!empty($field_name_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo htmlspecialchars($field_name); ?>">
                                 <div class="invalid-feedback"><?php echo $field_name_err; ?></div>
                             </div>
@@ -315,24 +315,24 @@ include '../includes/head.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="expected_harvest_date" class="form-label">Expected Harvest Date</label>
-                                <input type="date" name="expected_harvest_date" id="expected_harvest_date"
-                                       class="form-control <?php echo (!empty($expected_harvest_date_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="date" name="expected_harvest_date" id="expected_harvest_date" 
+                                       class="form-control <?php echo (!empty($expected_harvest_date_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo $expected_harvest_date; ?>">
                                 <div class="invalid-feedback"><?php echo $expected_harvest_date_err; ?></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="actual_harvest_date" class="form-label">Actual Harvest Date</label>
-                                <input type="date" name="actual_harvest_date" id="actual_harvest_date"
-                                       class="form-control <?php echo (!empty($actual_harvest_date_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="date" name="actual_harvest_date" id="actual_harvest_date" 
+                                       class="form-control <?php echo (!empty($actual_harvest_date_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo $actual_harvest_date; ?>">
                                 <div class="invalid-feedback"><?php echo $actual_harvest_date_err; ?></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="harvested_amount_kg" class="form-label">Harvested Amount (kg)</label>
-                                <input type="number" name="harvested_amount_kg" id="harvested_amount_kg" step="0.01" min="0"
-                                       class="form-control <?php echo (!empty($harvested_amount_kg_err)) ? 'is-invalid' : ''; ?>"
+                                <input type="number" name="harvested_amount_kg" id="harvested_amount_kg" step="0.01" min="0" 
+                                       class="form-control <?php echo (!empty($harvested_amount_kg_err)) ? 'is-invalid' : ''; ?>" 
                                        value="<?php echo $harvested_amount_kg; ?>">
                                 <div class="invalid-feedback"><?php echo $harvested_amount_kg_err; ?></div>
                             </div>
@@ -370,42 +370,42 @@ include '../includes/head.php';
 </div>
 
 <script>
-    // Add validation for harvest dates
-    document.getElementById('sowing_date').addEventListener('change', function() {
-        const sowingDate = this.value;
-        const expectedHarvestDate = document.getElementById('expected_harvest_date');
-        const actualHarvestDate = document.getElementById('actual_harvest_date');
+// Add validation for harvest dates
+document.getElementById('sowing_date').addEventListener('change', function() {
+    const sowingDate = this.value;
+    const expectedHarvestDate = document.getElementById('expected_harvest_date');
+    const actualHarvestDate = document.getElementById('actual_harvest_date');
+    
+    if (expectedHarvestDate.value && sowingDate && expectedHarvestDate.value <= sowingDate) {
+        expectedHarvestDate.setCustomValidity('Expected harvest date must be after sowing date');
+    } else {
+        expectedHarvestDate.setCustomValidity('');
+    }
+    
+    if (actualHarvestDate.value && sowingDate && actualHarvestDate.value < sowingDate) {
+        actualHarvestDate.setCustomValidity('Actual harvest date must be after sowing date');
+    } else {
+        actualHarvestDate.setCustomValidity('');
+    }
+});
 
-        if (expectedHarvestDate.value && sowingDate && expectedHarvestDate.value <= sowingDate) {
-            expectedHarvestDate.setCustomValidity('Expected harvest date must be after sowing date');
-        } else {
-            expectedHarvestDate.setCustomValidity('');
-        }
+document.getElementById('expected_harvest_date').addEventListener('change', function() {
+    const sowingDate = document.getElementById('sowing_date').value;
+    if (sowingDate && this.value <= sowingDate) {
+        this.setCustomValidity('Expected harvest date must be after sowing date');
+    } else {
+        this.setCustomValidity('');
+    }
+});
 
-        if (actualHarvestDate.value && sowingDate && actualHarvestDate.value < sowingDate) {
-            actualHarvestDate.setCustomValidity('Actual harvest date must be after sowing date');
-        } else {
-            actualHarvestDate.setCustomValidity('');
-        }
-    });
-
-    document.getElementById('expected_harvest_date').addEventListener('change', function() {
-        const sowingDate = document.getElementById('sowing_date').value;
-        if (sowingDate && this.value <= sowingDate) {
-            this.setCustomValidity('Expected harvest date must be after sowing date');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-
-    document.getElementById('actual_harvest_date').addEventListener('change', function() {
-        const sowingDate = document.getElementById('sowing_date').value;
-        if (sowingDate && this.value < sowingDate) {
-            this.setCustomValidity('Actual harvest date must be after sowing date');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
+document.getElementById('actual_harvest_date').addEventListener('change', function() {
+    const sowingDate = document.getElementById('sowing_date').value;
+    if (sowingDate && this.value < sowingDate) {
+        this.setCustomValidity('Actual harvest date must be after sowing date');
+    } else {
+        this.setCustomValidity('');
+    }
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>

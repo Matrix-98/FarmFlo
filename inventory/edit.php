@@ -57,7 +57,7 @@ $sql_locations = "SELECT location_id, name, type, capacity_kg, capacity_m3 FROM 
 if ($result_locations = mysqli_query($conn, $sql_locations)) {
     while ($row = mysqli_fetch_assoc($result_locations)) {
         if ($user_role != 'warehouse_manager' || in_array($row['location_id'], $allowed_location_ids)) {
-            $locations_options[] = $row;
+             $locations_options[] = $row;
         }
     }
     mysqli_free_result($result_locations);
@@ -296,10 +296,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Update Inventory</button>
             </form>
             <?php if (isset($created_at) || isset($updated_at)): ?>
-                <div class="mt-3 border-top pt-3 text-muted small">
-                    Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
-                    Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
-                </div>
+            <div class="mt-3 border-top pt-3 text-muted small">
+                Created: <?php echo htmlspecialchars($created_at); ?> by <?php echo htmlspecialchars($created_by_username ?: 'N/A'); ?><br>
+                Last Updated: <?php echo htmlspecialchars($updated_at); ?> by <?php echo htmlspecialchars($updated_by_username ?: 'N/A'); ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -309,141 +309,141 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!-- NEW: Real-time Capacity Validation JavaScript -->
 <script>
-    // Store product and location data for calculations
-    const productsData = <?php echo json_encode($products_options); ?>;
-    const locationsData = <?php echo json_encode($locations_options); ?>;
+// Store product and location data for calculations
+const productsData = <?php echo json_encode($products_options); ?>;
+const locationsData = <?php echo json_encode($locations_options); ?>;
 
-    // Function to get product data by ID
-    function getProductData(productId) {
-        return productsData.find(product => product.product_id == productId);
+// Function to get product data by ID
+function getProductData(productId) {
+    return productsData.find(product => product.product_id == productId);
+}
+
+// Function to get location data by ID
+function getLocationData(locationId) {
+    return locationsData.find(location => location.location_id == locationId);
+}
+
+// Function to check capacity in real-time
+async function checkCapacity() {
+    const productId = document.getElementById('product_id').value;
+    const locationId = document.getElementById('location_id').value;
+    const quantity = parseFloat(document.getElementById('quantity_kg').value) || 0;
+    const operation = 'update'; // For edit, always use 'update' operation
+    const existingInventoryId = <?php echo $inventory_id; ?>; // Current inventory ID being edited
+    
+    if (!productId || !locationId || quantity <= 0) {
+        hideCapacityInfo();
+        return;
     }
-
-    // Function to get location data by ID
-    function getLocationData(locationId) {
-        return locationsData.find(location => location.location_id == locationId);
+    
+    const product = getProductData(productId);
+    const location = getLocationData(locationId);
+    
+    if (!product || !location) {
+        hideCapacityInfo();
+        return;
     }
-
-    // Function to check capacity in real-time
-    async function checkCapacity() {
-        const productId = document.getElementById('product_id').value;
-        const locationId = document.getElementById('location_id').value;
-        const quantity = parseFloat(document.getElementById('quantity_kg').value) || 0;
-        const operation = 'update'; // For edit, always use 'update' operation
-        const existingInventoryId = <?php echo $inventory_id; ?>; // Current inventory ID being edited
-
-        if (!productId || !locationId || quantity <= 0) {
-            hideCapacityInfo();
-            return;
-        }
-
-        const product = getProductData(productId);
-        const location = getLocationData(locationId);
-
-        if (!product || !location) {
-            hideCapacityInfo();
-            return;
-        }
-
-        // Only check capacity for warehouses
-        if (location.type !== 'warehouse' || (!location.capacity_kg && !location.capacity_m3)) {
-            hideCapacityInfo();
-            return;
-        }
-
-        try {
-            const response = await fetch('<?php echo BASE_URL; ?>utils/capacity_check.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    location_id: locationId,
-                    product_id: productId,
-                    quantity: quantity,
-                    operation: operation,
-                    existing_inventory_id: existingInventoryId
-                })
-            });
-
-            const data = await response.json();
-            showCapacityInfo(data, product, location);
-        } catch (error) {
-            console.error('Error checking capacity:', error);
-            hideCapacityInfo();
-        }
+    
+    // Only check capacity for warehouses
+    if (location.type !== 'warehouse' || (!location.capacity_kg && !location.capacity_m3)) {
+        hideCapacityInfo();
+        return;
     }
+    
+    try {
+        const response = await fetch('<?php echo BASE_URL; ?>utils/capacity_check.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                location_id: locationId,
+                product_id: productId,
+                quantity: quantity,
+                operation: operation,
+                existing_inventory_id: existingInventoryId
+            })
+        });
+        
+        const data = await response.json();
+        showCapacityInfo(data, product, location);
+    } catch (error) {
+        console.error('Error checking capacity:', error);
+        hideCapacityInfo();
+    }
+}
 
-    // Function to show capacity information
-    function showCapacityInfo(data, product, location) {
-        let capacityInfo = document.getElementById('capacity-info');
-        if (!capacityInfo) {
-            capacityInfo = document.createElement('div');
-            capacityInfo.id = 'capacity-info';
-            capacityInfo.className = 'alert mt-3';
-            document.getElementById('quantity_kg').parentNode.appendChild(capacityInfo);
-        }
-
-        let html = '<h6><i class="fas fa-warehouse"></i> Warehouse Capacity Check</h6>';
-
-        if (data.valid) {
-            capacityInfo.className = 'alert alert-success mt-3';
-
-            if (location.capacity_kg > 0) {
-                const weightUsage = ((data.new_weight / location.capacity_kg) * 100).toFixed(1);
-                const weightColor = weightUsage >= 90 ? 'danger' : weightUsage >= 80 ? 'warning' : 'success';
-                html += `
+// Function to show capacity information
+function showCapacityInfo(data, product, location) {
+    let capacityInfo = document.getElementById('capacity-info');
+    if (!capacityInfo) {
+        capacityInfo = document.createElement('div');
+        capacityInfo.id = 'capacity-info';
+        capacityInfo.className = 'alert mt-3';
+        document.getElementById('quantity_kg').parentNode.appendChild(capacityInfo);
+    }
+    
+    let html = '<h6><i class="fas fa-warehouse"></i> Warehouse Capacity Check</h6>';
+    
+    if (data.valid) {
+        capacityInfo.className = 'alert alert-success mt-3';
+        
+        if (location.capacity_kg > 0) {
+            const weightUsage = ((data.new_weight / location.capacity_kg) * 100).toFixed(1);
+            const weightColor = weightUsage >= 90 ? 'danger' : weightUsage >= 80 ? 'warning' : 'success';
+            html += `
                 <div class="mb-2">
-                    <small>Weight: ${data.current_weight.toFixed(2)} → ${data.new_weight.toFixed(2)} / ${location.capacity_kg} kg
+                    <small>Weight: ${data.current_weight.toFixed(2)} → ${data.new_weight.toFixed(2)} / ${location.capacity_kg} kg 
                     <span class="badge bg-${weightColor}">${weightUsage}%</span></small>
                     <div class="progress" style="height: 4px;">
                         <div class="progress-bar bg-${weightColor}" style="width: ${Math.min(100, weightUsage)}%"></div>
                     </div>
                 </div>
             `;
-            }
-
-            if (location.capacity_m3 > 0) {
-                const volumeUsage = ((data.new_volume / location.capacity_m3) * 100).toFixed(1);
-                const volumeColor = volumeUsage >= 90 ? 'danger' : volumeUsage >= 80 ? 'warning' : 'info';
-                html += `
+        }
+        
+        if (location.capacity_m3 > 0) {
+            const volumeUsage = ((data.new_volume / location.capacity_m3) * 100).toFixed(1);
+            const volumeColor = volumeUsage >= 90 ? 'danger' : volumeUsage >= 80 ? 'warning' : 'info';
+            html += `
                 <div class="mb-2">
-                    <small>Volume: ${data.current_volume.toFixed(3)} → ${data.new_volume.toFixed(3)} / ${location.capacity_m3} m³
+                    <small>Volume: ${data.current_volume.toFixed(3)} → ${data.new_volume.toFixed(3)} / ${location.capacity_m3} m³ 
                     <span class="badge bg-${volumeColor}">${volumeUsage}%</span></small>
                     <div class="progress" style="height: 4px;">
                         <div class="progress-bar bg-${volumeColor}" style="width: ${Math.min(100, volumeUsage)}%"></div>
                     </div>
                 </div>
             `;
-            }
-
-            html += '<small class="text-success"><i class="fas fa-check-circle"></i> Capacity check passed</small>';
-        } else {
-            capacityInfo.className = 'alert alert-danger mt-3';
-            html += `<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${data.message}</small>`;
         }
-
-        capacityInfo.innerHTML = html;
+        
+        html += '<small class="text-success"><i class="fas fa-check-circle"></i> Capacity check passed</small>';
+    } else {
+        capacityInfo.className = 'alert alert-danger mt-3';
+        html += `<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${data.message}</small>`;
     }
+    
+    capacityInfo.innerHTML = html;
+}
 
-    // Function to hide capacity information
-    function hideCapacityInfo() {
-        const capacityInfo = document.getElementById('capacity-info');
-        if (capacityInfo) {
-            capacityInfo.remove();
-        }
+// Function to hide capacity information
+function hideCapacityInfo() {
+    const capacityInfo = document.getElementById('capacity-info');
+    if (capacityInfo) {
+        capacityInfo.remove();
     }
+}
 
-    // Add event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        const productSelect = document.getElementById('product_id');
-        const locationSelect = document.getElementById('location_id');
-        const quantityInput = document.getElementById('quantity_kg');
-
-        productSelect.addEventListener('change', checkCapacity);
-        locationSelect.addEventListener('change', checkCapacity);
-        quantityInput.addEventListener('input', checkCapacity);
-
-        // Initial check on page load
-        checkCapacity();
-    });
+// Add event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('product_id');
+    const locationSelect = document.getElementById('location_id');
+    const quantityInput = document.getElementById('quantity_kg');
+    
+    productSelect.addEventListener('change', checkCapacity);
+    locationSelect.addEventListener('change', checkCapacity);
+    quantityInput.addEventListener('input', checkCapacity);
+    
+    // Initial check on page load
+    checkCapacity();
+});
 </script>

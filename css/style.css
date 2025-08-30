@@ -9,32 +9,32 @@
   --primary-light: #4CAF50;
   --primary-dark: #1B5E20;
   --primary-hover: #388E3C;
-
+  
   /* Secondary Colors */
   --secondary-color: #FF8F00;
   --secondary-light: #FFB74D;
   --secondary-dark: #F57C00;
-
+  
   /* Neutral Colors */
   --white: #FFFFFF;
   --light-gray: #F5F5F5;
   --gray: #9E9E9E;
   --dark-gray: #424242;
   --black: #212121;
-
+  
   /* Status Colors */
   --success: #4CAF50;
   --warning: #FF9800;
   --danger: #F44336;
   --info: #2196F3;
-
+  
   /* Background Colors */
   --bg-primary: #FAFAFA;
   --bg-secondary: #F5F5F5;
   --bg-card: #FFFFFF;
   --bg-sidebar: #2E7D32;
   --bg-navbar: #FFFFFF;
-
+  
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-xs: 0.75rem;
@@ -44,7 +44,7 @@
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
-
+  
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -52,19 +52,19 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
-
+  
   /* Border Radius */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-
+  
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
+  
   /* Transitions */
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.3s ease-in-out;
@@ -872,28 +872,28 @@ a:hover {
   .sidebar {
     display: none;
   }
-
+  
   .content {
     margin-left: 0;
   }
-
+  
   .container {
     padding: 0 15px;
   }
-
+  
   .card-body {
     padding: 15px;
   }
-
+  
   .dashboard-card {
     margin-bottom: 15px;
   }
-
+  
   .btn {
     padding: 8px 12px;
     font-size: 14px;
   }
-
+  
   .table-responsive {
     font-size: 14px;
   }
@@ -946,12 +946,12 @@ a:hover {
   .no-print {
     display: none !important;
   }
-
+  
   .card {
     border: 1px solid #000;
     box-shadow: none;
   }
-
+  
   body {
     background: white;
     color: black;

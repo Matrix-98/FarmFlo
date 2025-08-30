@@ -1,9 +1,9 @@
 <?php
 /**
  * Unified Status Badge Component
- *
+ * 
  * Usage: include this file and call getStatusBadge($status, $type)
- *
+ * 
  * @param string $status - The status value
  * @param string $type - 'shipment', 'order', or 'tracking'
  * @return string - HTML badge
@@ -32,9 +32,9 @@ function getStatusBadge($status, $type = 'shipment') {
             'failed' => ['class' => 'bg-danger', 'text' => 'Failed']
         ]
     ];
-
+    
     $config = $status_map[$type][$status] ?? ['class' => 'bg-secondary', 'text' => ucfirst(str_replace('_', ' ', $status))];
-
+    
     return '<span class="badge ' . $config['class'] . '">' . $config['text'] . '</span>';
 }
 
@@ -42,7 +42,7 @@ function getStatusFlow($type = 'shipment') {
     $flows = [
         'shipment' => [
             'pending' => 'assigned',
-            'assigned' => 'in_transit',
+            'assigned' => 'in_transit', 
             'in_transit' => 'out_for_delivery',
             'out_for_delivery' => 'delivered',
             'delivered' => null,
@@ -55,7 +55,7 @@ function getStatusFlow($type = 'shipment') {
             'cancelled' => null
         ]
     ];
-
+    
     return $flows[$type] ?? [];
 }
 
@@ -67,21 +67,21 @@ function getNextStatus($current_status, $type = 'shipment') {
 function getAvailableStatuses($current_status, $type = 'shipment') {
     $flow = getStatusFlow($type);
     $available = [];
-
+    
     // Add next logical status
     $next = getNextStatus($current_status, $type);
     if ($next) {
         $available[] = $next;
     }
-
+    
     // Add failure status (can happen at any stage)
     if ($type === 'shipment') {
         $available[] = 'failed';
     }
-
+    
     // Add current status (for no change)
     $available[] = $current_status;
-
+    
     return array_unique($available);
 }
 ?>

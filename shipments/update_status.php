@@ -33,8 +33,8 @@ if (isset($_GET["id"]) && !empty(trim($_GET["id"]))) {
                         FROM shipments s
                         JOIN locations ol ON s.origin_location_id = ol.location_id
                         JOIN locations dl ON s.destination_location_id = dl.location_id
-                        JOIN orders o ON s.order_id = o.order_id
-                        JOIN users u ON o.customer_id = u.user_id
+                        LEFT JOIN orders o ON s.order_id = o.order_id
+                        LEFT JOIN users u ON o.customer_id = u.user_id
                         WHERE s.shipment_id = ?";
     
     if ($stmt_fetch = mysqli_prepare($conn, $sql_fetch_status)) {
@@ -202,7 +202,7 @@ include '../includes/head.php';
         ?>
 
         <!-- Shipment Info Card -->
-        <?php if (isset($route) && isset($customer_info)): ?>
+        <?php if (isset($route)): ?>
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card bg-light">
@@ -213,8 +213,16 @@ include '../includes/head.php';
                                 <p class="mb-0 fw-bold"><?php echo htmlspecialchars($route); ?></p>
                             </div>
                             <div class="col-md-4">
-                                <h6 class="text-muted mb-1">Customer</h6>
-                                <p class="mb-0 fw-bold"><?php echo htmlspecialchars($customer_info); ?></p>
+                                <h6 class="text-muted mb-1">
+                                    <?php echo $order_id ? 'Customer' : 'Shipment Type'; ?>
+                                </h6>
+                                <p class="mb-0 fw-bold">
+                                    <?php if ($order_id && $customer_info): ?>
+                                        <?php echo htmlspecialchars($customer_info); ?>
+                                    <?php else: ?>
+                                        <span class="badge bg-info">Farm Production Shipment</span>
+                                    <?php endif; ?>
+                                </p>
                             </div>
                             <div class="col-md-4">
                                 <h6 class="text-muted mb-1">Current Status</h6>
