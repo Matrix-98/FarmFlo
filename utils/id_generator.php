@@ -483,4 +483,28 @@ function getYearFromCode($code) {
     }
     return null;
 }
+/**
+ * Generate a code for farmer pickup requests.
+ * Format: FPR + YY + 5 digits (e.g., FPR25xxxxx)
+ */
+function generateFarmerPickupRequestCode() {
+    global $conn;
+    $year = date('y');
+    $sql = "SELECT MAX(CAST(SUBSTRING(request_code, 5) AS UNSIGNED)) AS max_num
+            FROM farmer_pickup_requests
+            WHERE request_code LIKE CONCAT('FPR', ?, '%')";
+    $next = 1;
+    if ($stmt = mysqli_prepare($conn, $sql)) {
+        mysqli_stmt_bind_param($stmt, "s", $year);
+        if (mysqli_stmt_execute($stmt)) {
+            $res = mysqli_stmt_get_result($stmt);
+            if ($row = mysqli_fetch_assoc($res)) {
+                if (!empty($row['max_num'])) $next = intval($row['max_num']) + 1;
+            }
+        }
+        mysqli_stmt_close($stmt);
+    }
+    return sprintf("FPR%s%05d", $year, $next);
+}
+
 ?>
